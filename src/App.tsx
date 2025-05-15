@@ -1,32 +1,50 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Flashcard from "./components/Flashcard";
-import { hskDecks } from "./data/hskDecks";
 import BottomControls from "./components/BottomControls";
 import AddCardModal from "./components/AddCardModal";
+
+import { hsk1 } from "./data/hsk1";
+import { hsk2 } from "./data/hsk2";
+import { hsk3 } from "./data/hsk3";
+import { hsk4 } from "./data/hsk4";
+import { hsk5 } from "./data/hsk5";
+import { hsk6 } from "./data/hsk6";
+import { hsk7 } from "./data/hsk7";
+
 import { IconButton, Button, Stack, LinearProgress } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
-export type HSKLevel = keyof typeof hskDecks;
+export type HSKLevel = "hsk1" | "hsk2" | "hsk3" | "hsk4" | "hsk5" | "hsk6";
+
+const hskDecks = {
+  hsk1,
+  hsk2,
+  hsk3,
+  hsk4,
+  hsk5,
+  hsk6,
+  hsk7,
+};
 
 function App() {
-  const [category, setCategory] = useState<HSKLevel>("hsk1");
-  const getDeckData = (name: string) => {
-    if (hskDecks[name as HSKLevel]) {
+  const [category, setCategory] = useState<string>("hsk1");
+  const [deck, setDeck] = useState(getDeckData("hsk1"));
+  const [index, setIndex] = useState(0);
+  const [userDecks, setUserDecks] = useState<string[]>([]);
+  const [showPinyin, setShowPinyin] = useState(true);
+  const [showTraditional, setShowTraditional] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  function getDeckData(name: string) {
+    if (Object.prototype.hasOwnProperty.call(hskDecks, name)) {
       return hskDecks[name as HSKLevel];
     }
     const stored = localStorage.getItem(`deck::${name}`);
     return stored ? JSON.parse(stored) : [];
-  };
-
-  const [deck, setDeck] = useState(hskDecks[category]);
-  const [index, setIndex] = useState(0);
-  const [showPinyin, setShowPinyin] = useState(true);
-  const [showTraditional, setShowTraditional] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [userDecks, setUserDecks] = useState<string[]>([]);
+  }
 
   const currentCard = deck[index];
 
@@ -41,9 +59,8 @@ function App() {
   };
 
   const changeCategory = (newCategory: string) => {
-    setCategory(newCategory as HSKLevel);
-    const newDeck = getDeckData(newCategory);
-    setDeck(newDeck);
+    setCategory(newCategory);
+    setDeck(getDeckData(newCategory));
     setIndex(0);
   };
 
@@ -55,15 +72,12 @@ function App() {
   };
 
   const handleDeleteDeck = (deckName: string) => {
-  localStorage.removeItem(`deck::${deckName}`);
-  refreshUserDecks();
-  if (category === deckName) {
-    setCategory("hsk1");
-    setDeck(hskDecks["hsk1"]);
-    setIndex(0);
-  }
-};
-
+    localStorage.removeItem(`deck::${deckName}`);
+    refreshUserDecks();
+    if (category === deckName) {
+      changeCategory("hsk1");
+    }
+  };
 
   useEffect(() => {
     refreshUserDecks();
@@ -79,8 +93,8 @@ function App() {
       {/* Flashcard */}
       <div className="mb-4 w-full">
         <Flashcard
-          question={currentCard.question}
-          answer={currentCard.answer}
+          question={currentCard?.question}
+          answer={currentCard?.answer}
           showPinyin={showPinyin}
           showTraditional={showTraditional}
         />
@@ -128,6 +142,7 @@ function App() {
         </Button>
       </Stack>
 
+      {/* Bottom Controls */}
       <BottomControls
         category={category}
         onChangeCategory={changeCategory}
@@ -141,15 +156,14 @@ function App() {
         onDeleteDeck={handleDeleteDeck}
       />
 
+      {/* Add Card Modal */}
       <AddCardModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCardAdded={() => {
           refreshUserDecks();
-          if (category.startsWith("deck::") || userDecks.includes(category)) {
-            const updated = getDeckData(category);
-            setDeck(updated);
-          }
+          const updated = getDeckData(category);
+          setDeck(updated);
         }}
         existingDecks={userDecks}
       />
