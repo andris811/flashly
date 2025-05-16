@@ -19,7 +19,7 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import FolderIcon from "@mui/icons-material/Folder";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DeleteIcon from "@mui/icons-material/Delete";
-import type { HSKLevel } from "../App";
+import type { HSKLevel } from "../data/hskDecks";
 
 type Props = {
   category: string;
@@ -50,7 +50,9 @@ const BottomControls = ({
   const [anchorHSK, setAnchorHSK] = useState<null | HTMLElement>(null);
   const [anchorUser, setAnchorUser] = useState<null | HTMLElement>(null);
   const [anchorOptions, setAnchorOptions] = useState<null | HTMLElement>(null);
-  const [confirmDeleteDeck, setConfirmDeleteDeck] = useState<string | null>(null);
+  const [confirmDeleteDeck, setConfirmDeleteDeck] = useState<string | null>(
+    null
+  );
 
   const layoutStyles: SxProps<Theme> = isMobile
     ? {
@@ -82,29 +84,46 @@ const BottomControls = ({
   return (
     <Box sx={layoutStyles}>
       {/* HSK Decks */}
-      <IconButton onClick={(e) => setAnchorHSK(e.currentTarget)} aria-label="HSK Decks">
+      <IconButton
+        onClick={(e) => setAnchorHSK(e.currentTarget)}
+        aria-label="HSK Decks"
+      >
         <MenuBookIcon />
       </IconButton>
-      <Menu anchorEl={anchorHSK} open={Boolean(anchorHSK)} onClose={() => setAnchorHSK(null)}>
-        {hskCategories.map((cat) => (
-          <MenuItem
-            key={cat}
-            selected={cat === category}
-            onClick={() => {
-              onChangeCategory(cat);
-              setAnchorHSK(null);
-            }}
-          >
-            {cat.toUpperCase()}
-          </MenuItem>
-        ))}
+      <Menu
+        anchorEl={anchorHSK}
+        open={Boolean(anchorHSK)}
+        onClose={() => setAnchorHSK(null)}
+      >
+        {hskCategories.map((cat) => {
+          const label = cat === "hsk79" ? "HSK 7–9" : cat.toUpperCase();
+          return (
+            <MenuItem
+              key={cat}
+              selected={cat === category}
+              onClick={() => {
+                onChangeCategory(cat);
+                setAnchorHSK(null);
+              }}
+            >
+              {label}
+            </MenuItem>
+          );
+        })}
       </Menu>
 
       {/* User Decks */}
-      <IconButton onClick={(e) => setAnchorUser(e.currentTarget)} aria-label="User Decks">
+      <IconButton
+        onClick={(e) => setAnchorUser(e.currentTarget)}
+        aria-label="User Decks"
+      >
         <FolderIcon />
       </IconButton>
-      <Menu anchorEl={anchorUser} open={Boolean(anchorUser)} onClose={() => setAnchorUser(null)}>
+      <Menu
+        anchorEl={anchorUser}
+        open={Boolean(anchorUser)}
+        onClose={() => setAnchorUser(null)}
+      >
         {userCategories.length === 0 ? (
           <MenuItem disabled>No custom decks yet</MenuItem>
         ) : (
@@ -143,31 +162,58 @@ const BottomControls = ({
       </Menu>
 
       {/* Add Card */}
-      <Fab color="primary" onClick={onAddCard} size="medium" aria-label="Add Card">
+      <Fab
+        color="primary"
+        onClick={onAddCard}
+        size="medium"
+        aria-label="Add Card"
+      >
         <AddIcon />
       </Fab>
 
       {/* Options */}
-      <IconButton onClick={(e) => setAnchorOptions(e.currentTarget)} aria-label="Options">
+      <IconButton
+        onClick={(e) => setAnchorOptions(e.currentTarget)}
+        aria-label="Options"
+      >
         <SettingsIcon />
       </IconButton>
-      <Menu anchorEl={anchorOptions} open={Boolean(anchorOptions)} onClose={() => setAnchorOptions(null)}>
+      <Menu
+        anchorEl={anchorOptions}
+        open={Boolean(anchorOptions)}
+        onClose={() => setAnchorOptions(null)}
+      >
         <MenuItem>
           <FormControlLabel
-            control={<Switch checked={showPinyin} onChange={togglePinyin} size="small" />}
+            control={
+              <Switch
+                checked={showPinyin}
+                onChange={togglePinyin}
+                size="small"
+              />
+            }
             label="Pinyin"
           />
         </MenuItem>
         <MenuItem>
           <FormControlLabel
-            control={<Switch checked={showTraditional} onChange={toggleTraditional} size="small" />}
+            control={
+              <Switch
+                checked={showTraditional}
+                onChange={toggleTraditional}
+                size="small"
+              />
+            }
             label="Traditional"
           />
         </MenuItem>
       </Menu>
 
       {/* Confirm Delete Dialog */}
-      <Dialog open={!!confirmDeleteDeck} onClose={() => setConfirmDeleteDeck(null)}>
+      <Dialog
+        open={!!confirmDeleteDeck}
+        onClose={() => setConfirmDeleteDeck(null)}
+      >
         <DialogTitle>
           {`Delete deck "${confirmDeleteDeck}"? This cannot be undone.`}
         </DialogTitle>

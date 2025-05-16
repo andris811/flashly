@@ -2,32 +2,14 @@ import { useEffect, useState } from "react";
 import Flashcard from "./components/Flashcard";
 import BottomControls from "./components/BottomControls";
 import AddCardModal from "./components/AddCardModal";
-
-import { hsk1 } from "./data/hsk1";
-import { hsk2 } from "./data/hsk2";
-import { hsk3 } from "./data/hsk3";
-import { hsk4 } from "./data/hsk4";
-import { hsk5 } from "./data/hsk5";
-import { hsk6 } from "./data/hsk6";
-import { hsk7 } from "./data/hsk7";
-
+import { hskDecks } from "./data/hskDecks";
+import type { HSKLevel } from "./data/hskDecks";
 import { IconButton, Button, Stack, LinearProgress } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
-export type HSKLevel = "hsk1" | "hsk2" | "hsk3" | "hsk4" | "hsk5" | "hsk6";
-
-const hskDecks = {
-  hsk1,
-  hsk2,
-  hsk3,
-  hsk4,
-  hsk5,
-  hsk6,
-  hsk7,
-};
 
 function App() {
   const [category, setCategory] = useState<string>("hsk1");
