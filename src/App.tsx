@@ -2,30 +2,51 @@ import { useEffect, useState } from "react";
 import Flashcard from "./components/Flashcard";
 import BottomControls from "./components/BottomControls";
 import AddCardModal from "./components/AddCardModal";
+import SaveToListModal from "./components/SaveToListModal";
+
 import { hskDecks } from "./data/hskDecks";
 import type { HSKLevel } from "./data/hskDecks";
-import { IconButton, Button, Stack, LinearProgress } from "@mui/material";
+
+import {
+  IconButton,
+  Button,
+  Stack,
+  LinearProgress,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
+// Define the card structure
+type FlashcardData = {
+  question:
+    | {
+        simplified: string;
+        traditional?: string;
+        pinyin?: string;
+      }
+    | string;
+  answer: string;
+};
 
 function App() {
   const [category, setCategory] = useState<string>("hsk1");
-  const [deck, setDeck] = useState(getDeckData("hsk1"));
+  const [deck, setDeck] = useState<FlashcardData[]>(getDeckData("hsk1"));
   const [index, setIndex] = useState(0);
   const [userDecks, setUserDecks] = useState<string[]>([]);
   const [showPinyin, setShowPinyin] = useState(true);
   const [showTraditional, setShowTraditional] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [cardToSave, setCardToSave] = useState<FlashcardData | null>(null);
 
-  function getDeckData(name: string) {
+  function getDeckData(name: string): FlashcardData[] {
     if (Object.prototype.hasOwnProperty.call(hskDecks, name)) {
       return hskDecks[name as HSKLevel];
     }
     const stored = localStorage.getItem(`deck::${name}`);
-    return stored ? JSON.parse(stored) : [];
+    return stored ? (JSON.parse(stored) as FlashcardData[]) : [];
   }
 
   const currentCard = deck[index];
@@ -61,35 +82,43 @@ function App() {
     }
   };
 
+  const handleSaveToList = (card: FlashcardData) => {
+    setCardToSave(card);
+    setSaveModalOpen(true);
+  };
+
+  const handleSaveToDeck = (deckName: string, card: FlashcardData) => {
+    const existing = localStorage.getItem(`deck::${deckName}`);
+    const parsed: FlashcardData[] = existing ? JSON.parse(existing) : [];
+    parsed.push(card);
+    localStorage.setItem(`deck::${deckName}`, JSON.stringify(parsed));
+    refreshUserDecks();
+  };
+
   useEffect(() => {
     refreshUserDecks();
   }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
-      {/* Title */}
-      <h1 className="text-4xl font-bold mb-4 text-gray-800 text-center">
-        Flashly
-      </h1>
+      <h1 className="text-4xl font-bold mb-4 text-gray-800 text-center">Flashly</h1>
 
-      {/* Flashcard */}
       <div className="mb-4 w-full">
         <Flashcard
           question={currentCard?.question}
           answer={currentCard?.answer}
           showPinyin={showPinyin}
           showTraditional={showTraditional}
+          onSaveToList={handleSaveToList}
         />
       </div>
 
-      {/* Progress Bar */}
       <LinearProgress
         variant="determinate"
         value={((index + 1) / deck.length) * 100}
         className="w-full max-w-xs sm:max-w-sm mb-4 rounded"
       />
 
-      {/* Navigation */}
       <div className="flex items-center justify-center gap-6 sm:gap-8 mb-4 text-gray-700">
         <IconButton onClick={goPrev} disabled={index === 0}>
           <ArrowBackIcon />
@@ -102,7 +131,6 @@ function App() {
         </IconButton>
       </div>
 
-      {/* Reset & Shuffle */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <Button
           variant="outlined"
@@ -124,7 +152,6 @@ function App() {
         </Button>
       </Stack>
 
-      {/* Bottom Controls */}
       <BottomControls
         category={category}
         onChangeCategory={changeCategory}
@@ -138,7 +165,6 @@ function App() {
         onDeleteDeck={handleDeleteDeck}
       />
 
-      {/* Add Card Modal */}
       <AddCardModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -148,6 +174,14 @@ function App() {
           setDeck(updated);
         }}
         existingDecks={userDecks}
+      />
+
+      <SaveToListModal
+        open={saveModalOpen}
+        onClose={() => setSaveModalOpen(false)}
+        existingDecks={userDecks}
+        card={cardToSave}
+        onSave={handleSaveToDeck}
       />
     </div>
   );

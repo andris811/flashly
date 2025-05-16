@@ -1,19 +1,29 @@
 import { useState } from "react";
+import BookmarkAddIcon from "@mui/icons-material/BookmarkAdd";
+
+type QuestionType =
+  | {
+      simplified: string;
+      traditional?: string;
+      pinyin?: string;
+    }
+  | string;
 
 type FlashcardProps = {
-  question:
-    | {
-        simplified: string;
-        traditional?: string;
-        pinyin?: string;
-      }
-    | string;
+  question: QuestionType;
   answer: string;
   showPinyin: boolean;
   showTraditional: boolean;
+  onSaveToList?: (card: { question: QuestionType; answer: string }) => void;
 };
 
-const Flashcard = ({ question, answer, showPinyin, showTraditional }: FlashcardProps) => {
+const Flashcard = ({
+  question,
+  answer,
+  showPinyin,
+  showTraditional,
+  onSaveToList,
+}: FlashcardProps) => {
   const [flipped, setFlipped] = useState(false);
   const handleFlip = () => setFlipped(!flipped);
 
@@ -21,7 +31,7 @@ const Flashcard = ({ question, answer, showPinyin, showTraditional }: FlashcardP
 
   return (
     <div
-      className="w-full max-w-xs sm:max-w-sm h-48 perspective mx-auto"
+      className="w-full max-w-xs sm:max-w-sm h-52 perspective mx-auto cursor-pointer"
       onClick={handleFlip}
     >
       <div
@@ -31,6 +41,18 @@ const Flashcard = ({ question, answer, showPinyin, showTraditional }: FlashcardP
       >
         {/* Front */}
         <div className="absolute w-full h-full bg-white text-black border border-gray-300 shadow-xl rounded-lg flex flex-col items-center justify-center text-xl sm:text-2xl font-semibold backface-hidden p-4 text-center">
+          {onSaveToList && (
+            <button
+              className="absolute top-2 right-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSaveToList({ question, answer });
+              }}
+            >
+              <BookmarkAddIcon fontSize="small" color="primary" />
+            </button>
+          )}
+
           {isStringFront ? (
             <div className="text-base sm:text-lg">{question}</div>
           ) : (
