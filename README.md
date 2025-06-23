@@ -1,54 +1,93 @@
-# React + TypeScript + Vite
+# 📚 Flashly
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Flashly** is a lightweight, mobile-friendly flashcard app for learning vocabulary — perfect for Chinese learners and beyond. Built with React, TypeScript, Tailwind CSS, and MUI, Flashly supports both HSK vocabulary decks (HSK1–HSK9) and custom user-created decks for any language or subject.
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- ✅ Built-in HSK decks (HSK1 through HSK9)
+- ✍️ Create your own flashcards and organize them into custom decks
+- 🀄 Toggle between Simplified, Traditional, and Pinyin for Chinese decks
+- 💾 Decks saved to `localStorage` (persistent between sessions)
+- 💡 Intuitive flashcard interface with progress bar and navigation
+- ➕ Save built-in cards to custom decks on-the-fly
 
-## Expanding the ESLint configuration
+## 🚀 Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 1. Clone the Repository
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+git clone https://github.com/your-username/flashly.git
+cd flashly
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Install Dependencies
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm install
 ```
+
+### 3. Run the App Locally
+
+```bash
+npm run dev
+```
+
+Open your browser and navigate to [http://localhost:5173](http://localhost:5173)
+
+### 4. Build for Production
+
+```bash
+npm run build
+```
+
+## 📁 Project Structure
+
+```
+src/
+├── components/        # Reusable React components (Flashcard, Modals, Controls)
+├── data/              # HSK decks (JSON and TypeScript)
+├── App.tsx            # Main app logic and layout
+└── main.tsx           # Entry point
+```
+
+## 🛠 Tech Stack
+
+- React + TypeScript
+- Vite for fast development
+- Tailwind CSS v4
+- Material UI (MUI)
+- LocalStorage for persistence
+
+## 📦 Deployment
+
+To deploy on GitHub Pages:
+
+1. Add `"homepage": "https://your-username.github.io/flashly"` to `package.json`
+2. Run:
+
+```bash
+npm run build
+npx gh-pages -d dist
+```
+
+Make sure to install [gh-pages](https://www.npmjs.com/package/gh-pages) first:
+
+```bash
+npm install --save-dev gh-pages
+```
+
+## 🧭 Roadmap
+
+- [ ] Progress tracking system: mark cards as “seen”, “learning”, “mastered”
+- [ ] Export/import decks (JSON format)
+- [ ] User accounts & syncing
+- [ ] Dark mode toggle
+- [ ] Audio playback for pronunciation
+
+## 🤝 Contributing
+
+Pull requests are welcome! If you'd like to suggest improvements or help with feature development, feel free to fork and submit a PR.
+
+## 📄 License
+
+MIT License © 2025 [András Varga](https://github.com/andris811)
