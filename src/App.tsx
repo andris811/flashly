@@ -3,16 +3,12 @@ import Flashcard from "./components/Flashcard";
 import BottomControls from "./components/BottomControls";
 import AddCardModal from "./components/AddCardModal";
 import SaveToListModal from "./components/SaveToListModal";
+import Footer from "./components/Footer";
 
 import { hskDecks } from "./data/hskDecks";
 import type { HSKLevel } from "./data/hskDecks";
 
-import {
-  IconButton,
-  Button,
-  Stack,
-  LinearProgress,
-} from "@mui/material";
+import { IconButton, Button, Stack, LinearProgress } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
@@ -101,7 +97,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
-      <h1 className="text-4xl font-bold mb-4 text-gray-800 text-center">Flashly</h1>
+      <h1 className="text-4xl font-bold mb-4 text-gray-800 text-center">
+        Flashly
+      </h1>
 
       <div className="mb-4 w-full">
         <Flashcard
@@ -183,6 +181,10 @@ function App() {
         card={cardToSave}
         onSave={handleSaveToDeck}
       />
+      {/* Desktop footer */}
+      <div className="hidden sm:block w-full mt-auto">
+        <Footer />
+      </div>
     </div>
   );
 }

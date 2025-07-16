@@ -12,6 +12,8 @@ import {
   DialogTitle,
   DialogActions,
   Button,
+  Link,
+  Typography,
 } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
@@ -20,6 +22,8 @@ import FolderIcon from "@mui/icons-material/Folder";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DeleteIcon from "@mui/icons-material/Delete";
 import type { HSKLevel } from "../data/hskDecks";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
 
 type Props = {
   category: string;
@@ -62,7 +66,7 @@ const BottomControls = ({
         right: 0,
         zIndex: 1000,
         display: "flex",
-        justifyContent: "space-around",
+        flexDirection: "column",
         alignItems: "center",
         backgroundColor: "rgba(255,255,255,0.95)",
         borderTop: "1px solid #ccc",
@@ -81,157 +85,223 @@ const BottomControls = ({
         position: "relative",
       };
 
+  const year = new Date().getFullYear();
+
   return (
     <Box sx={layoutStyles}>
-      {/* HSK Decks */}
-      <IconButton
-        onClick={(e) => setAnchorHSK(e.currentTarget)}
-        aria-label="HSK Decks"
+      {/* buttons row */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-around",
+          width: "100%",
+          gap: "1rem",
+        }}
       >
-        <MenuBookIcon />
-      </IconButton>
-      <Menu
-        anchorEl={anchorHSK}
-        open={Boolean(anchorHSK)}
-        onClose={() => setAnchorHSK(null)}
-      >
-        {hskCategories.map((cat) => {
-          const label = cat === "hsk79" ? "HSK 7–9" : cat.toUpperCase();
-          return (
-            <MenuItem
-              key={cat}
-              selected={cat === category}
-              onClick={() => {
-                onChangeCategory(cat);
-                setAnchorHSK(null);
-              }}
-            >
-              {label}
-            </MenuItem>
-          );
-        })}
-      </Menu>
-
-      {/* User Decks */}
-      <IconButton
-        onClick={(e) => setAnchorUser(e.currentTarget)}
-        aria-label="User Decks"
-      >
-        <FolderIcon />
-      </IconButton>
-      <Menu
-        anchorEl={anchorUser}
-        open={Boolean(anchorUser)}
-        onClose={() => setAnchorUser(null)}
-      >
-        {userCategories.length === 0 ? (
-          <MenuItem disabled>No custom decks yet</MenuItem>
-        ) : (
-          userCategories.map((cat) => (
-            <MenuItem
-              key={cat}
-              selected={cat === category}
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <span
-                style={{ flexGrow: 1, cursor: "pointer" }}
+        {/* HSK Decks */}
+        <IconButton
+          onClick={(e) => setAnchorHSK(e.currentTarget)}
+          aria-label="HSK Decks"
+        >
+          <MenuBookIcon />
+        </IconButton>
+        <Menu
+          anchorEl={anchorHSK}
+          open={Boolean(anchorHSK)}
+          onClose={() => setAnchorHSK(null)}
+        >
+          {hskCategories.map((cat) => {
+            const label = cat === "hsk79" ? "HSK 7–9" : cat.toUpperCase();
+            return (
+              <MenuItem
+                key={cat}
+                selected={cat === category}
                 onClick={() => {
                   onChangeCategory(cat);
-                  setAnchorUser(null);
+                  setAnchorHSK(null);
                 }}
               >
-                {cat}
-              </span>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setAnchorUser(null);
-                  setConfirmDeleteDeck(cat);
+                {label}
+              </MenuItem>
+            );
+          })}
+        </Menu>
+
+        {/* User Decks */}
+        <IconButton
+          onClick={(e) => setAnchorUser(e.currentTarget)}
+          aria-label="User Decks"
+        >
+          <FolderIcon />
+        </IconButton>
+        <Menu
+          anchorEl={anchorUser}
+          open={Boolean(anchorUser)}
+          onClose={() => setAnchorUser(null)}
+        >
+          {userCategories.length === 0 ? (
+            <MenuItem disabled>No custom decks yet</MenuItem>
+          ) : (
+            userCategories.map((cat) => (
+              <MenuItem
+                key={cat}
+                selected={cat === category}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </MenuItem>
-          ))
-        )}
-      </Menu>
+                <span
+                  style={{ flexGrow: 1, cursor: "pointer" }}
+                  onClick={() => {
+                    onChangeCategory(cat);
+                    setAnchorUser(null);
+                  }}
+                >
+                  {cat}
+                </span>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setAnchorUser(null);
+                    setConfirmDeleteDeck(cat);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </MenuItem>
+            ))
+          )}
+        </Menu>
 
-      {/* Add Card */}
-      <Fab
-        color="primary"
-        onClick={onAddCard}
-        size="medium"
-        aria-label="Add Card"
-      >
-        <AddIcon />
-      </Fab>
+        {/* Add Card */}
+        <Fab
+          color="primary"
+          onClick={onAddCard}
+          size="medium"
+          aria-label="Add Card"
+        >
+          <AddIcon />
+        </Fab>
 
-      {/* Options */}
-      <IconButton
-        onClick={(e) => setAnchorOptions(e.currentTarget)}
-        aria-label="Options"
-      >
-        <SettingsIcon />
-      </IconButton>
-      <Menu
-        anchorEl={anchorOptions}
-        open={Boolean(anchorOptions)}
-        onClose={() => setAnchorOptions(null)}
-      >
-        <MenuItem>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={showPinyin}
-                onChange={togglePinyin}
-                size="small"
-              />
-            }
-            label="Pinyin"
-          />
-        </MenuItem>
-        <MenuItem>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={showTraditional}
-                onChange={toggleTraditional}
-                size="small"
-              />
-            }
-            label="Traditional"
-          />
-        </MenuItem>
-      </Menu>
-
-      {/* Confirm Delete Dialog */}
-      <Dialog
-        open={!!confirmDeleteDeck}
-        onClose={() => setConfirmDeleteDeck(null)}
-      >
-        <DialogTitle>
-          {`Delete deck "${confirmDeleteDeck}"? This cannot be undone.`}
-        </DialogTitle>
-        <DialogActions>
-          <Button onClick={() => setConfirmDeleteDeck(null)}>Cancel</Button>
-          <Button
-            color="error"
-            onClick={() => {
-              if (confirmDeleteDeck) {
-                onDeleteDeck(confirmDeleteDeck);
-                setConfirmDeleteDeck(null);
+        {/* Options */}
+        <IconButton
+          onClick={(e) => setAnchorOptions(e.currentTarget)}
+          aria-label="Options"
+        >
+          <SettingsIcon />
+        </IconButton>
+        <Menu
+          anchorEl={anchorOptions}
+          open={Boolean(anchorOptions)}
+          onClose={() => setAnchorOptions(null)}
+        >
+          <MenuItem>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showPinyin}
+                  onChange={togglePinyin}
+                  size="small"
+                />
               }
-            }}
+              label="Pinyin"
+            />
+          </MenuItem>
+          <MenuItem>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showTraditional}
+                  onChange={toggleTraditional}
+                  size="small"
+                />
+              }
+              label="Traditional"
+            />
+          </MenuItem>
+        </Menu>
+
+        {/* Confirm Delete Dialog */}
+        <Dialog
+          open={!!confirmDeleteDeck}
+          onClose={() => setConfirmDeleteDeck(null)}
+        >
+          <DialogTitle>
+            {`Delete deck "${confirmDeleteDeck}"? This cannot be undone.`}
+          </DialogTitle>
+          <DialogActions>
+            <Button onClick={() => setConfirmDeleteDeck(null)}>Cancel</Button>
+            <Button
+              color="error"
+              onClick={() => {
+                if (confirmDeleteDeck) {
+                  onDeleteDeck(confirmDeleteDeck);
+                  setConfirmDeleteDeck(null);
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+
+      {/* Mobile footer */}
+      {isMobile && (
+        <Box
+          sx={{
+            width: "100%",
+            marginTop: "0.75rem",
+            paddingTop: "0.5rem",
+            borderTop: "1px solid #ddd",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            fontSize: "0.75rem",
+            color: "#999",
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: "#999", fontSize: "0.75rem" }}
           >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+            © {year} Flashly |{" "}
+            <Link
+              href="https://andris811.github.io/avdev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="hover"
+              sx={{ color: "#999" }}
+            >
+              AVDev
+            </Link>
+          </Typography>
+          <Box>
+            <IconButton
+              href="https://github.com/andrasv89"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              sx={{ color: "#999" }}
+            >
+              <GitHubIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              href="https://linkedin.com/in/andrasv89"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              sx={{ color: "#999" }}
+            >
+              <LinkedInIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 };
