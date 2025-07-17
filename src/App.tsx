@@ -8,7 +8,13 @@ import Footer from "./components/Footer";
 import { hskDecks } from "./data/hskDecks";
 import type { HSKLevel } from "./data/hskDecks";
 
-import { IconButton, Button, Stack, LinearProgress } from "@mui/material";
+import {
+  IconButton,
+  Button,
+  Stack,
+  LinearProgress,
+  Typography,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
@@ -97,9 +103,20 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
-      <h1 className="text-4xl font-bold mb-4 text-gray-800 text-center">
+      <Typography
+        variant="h3"
+        sx={{
+          fontWeight: 800,
+          mt: 6,
+          mb: 4,
+          textAlign: "center",
+          color: "#1e293b",
+          textShadow: "0 2px 3px rgba(0,0,0,0.15)",
+          letterSpacing: "0.05em",
+        }}
+      >
         Flashly
-      </h1>
+      </Typography>
 
       <div className="mb-4 w-full">
         <Flashcard

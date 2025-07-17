@@ -31,50 +31,61 @@ const Flashcard = ({
 
   return (
     <div
-      className="w-full max-w-xs sm:max-w-sm h-52 perspective mx-auto cursor-pointer"
+      className="flex-grow flex items-center justify-center min-h-[50vh] sm:min-h-[60vh] xl:min-h-[80vh] transition-all"
       onClick={handleFlip}
     >
       <div
-        className={`relative w-full h-full duration-700 transform-style-preserve-3d transition-transform ${
-          flipped ? "rotate-y-180" : ""
-        }`}
+        className="w-[90%] max-w-md h-64 sm:h-72 xl:h-80 cursor-pointer perspective"
       >
-        {/* Front */}
-        <div className="absolute w-full h-full bg-white text-black border border-gray-300 shadow-xl rounded-lg flex flex-col items-center justify-center text-xl sm:text-2xl font-semibold backface-hidden p-4 text-center">
-          {onSaveToList && (
-            <button
-              className="absolute top-2 right-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSaveToList({ question, answer });
-              }}
-            >
-              <BookmarkAddIcon fontSize="small" color="primary" />
-            </button>
-          )}
+        <div
+          className={`relative w-full h-full transition-transform duration-700 ease-in-out transform-style-preserve-3d ${
+            flipped ? "rotate-y-180" : ""
+          }`}
+        >
+          {/* Front */}
+          <div className="absolute w-full h-full p-6 sm:p-8 text-center bg-white/70 backdrop-blur-md border border-gray-300 shadow-2xl hover:scale-[1.03] transition-transform rounded-2xl flex flex-col items-center justify-center backface-hidden">
+            {onSaveToList && (
+              <button
+                className="absolute top-3 right-3 text-blue-600 hover:text-blue-800"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSaveToList({ question, answer });
+                }}
+                aria-label="Save to deck"
+              >
+                <BookmarkAddIcon fontSize="medium" />
+              </button>
+            )}
 
-          {isStringFront ? (
-            <div className="text-base sm:text-lg">{question}</div>
-          ) : (
-            <>
-              <div>{question.simplified}</div>
-              {showTraditional && question.traditional && (
-                <div className="text-sm sm:text-base text-gray-500 mt-1">
-                  {question.traditional}
+            {isStringFront ? (
+              <div className="text-lg sm:text-xl xl:text-2xl font-medium text-gray-900">
+                {question}
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl sm:text-4xl xl:text-5xl font-extrabold text-gray-800 mb-1">
+                  {question.simplified}
                 </div>
-              )}
-              {showPinyin && question.pinyin && (
-                <div className="text-sm sm:text-base text-blue-500 mt-1">
-                  {question.pinyin}
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                {showTraditional && question.traditional && (
+                  <div className="text-base sm:text-lg text-gray-500">
+                    {question.traditional}
+                  </div>
+                )}
+                {showPinyin && question.pinyin && (
+                  <div className="text-base sm:text-lg text-blue-600 mt-1">
+                    {question.pinyin}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
-        {/* Back */}
-        <div className="absolute w-full h-full bg-indigo-100 text-gray-800 border border-gray-300 shadow-xl rounded-lg flex items-center justify-center text-base sm:text-lg font-medium rotate-y-180 backface-hidden p-4 text-center">
-          {answer}
+          {/* Back */}
+          <div className="absolute w-full h-full p-6 sm:p-8 text-center bg-gradient-to-br from-indigo-100 to-blue-100 text-gray-900 border border-gray-300 shadow-2xl hover:scale-[1.03] transition-transform rounded-2xl flex items-center justify-center rotate-y-180 backface-hidden">
+            <div className="text-lg sm:text-xl xl:text-2xl font-semibold leading-snug">
+              {answer}
+            </div>
+          </div>
         </div>
       </div>
     </div>
