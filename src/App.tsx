@@ -14,6 +14,8 @@ import {
   Stack,
   LinearProgress,
   Typography,
+  Paper,
+  Box,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -42,6 +44,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [cardToSave, setCardToSave] = useState<FlashcardData | null>(null);
+  const [flipped, setFlipped] = useState(false);
 
   function getDeckData(name: string): FlashcardData[] {
     if (Object.prototype.hasOwnProperty.call(hskDecks, name)) {
@@ -53,8 +56,21 @@ function App() {
 
   const currentCard = deck[index];
 
-  const goPrev = () => index > 0 && setIndex(index - 1);
-  const goNext = () => index < deck.length - 1 && setIndex(index + 1);
+  const goToCard = (newIndex: number) => {
+    setFlipped(false); // Trigger flip back
+    setTimeout(() => {
+      setIndex(newIndex);
+    }, 300); // match your CSS transition duration (usually 300–400ms)
+  };
+
+  const goPrev = () => {
+    if (index > 0) goToCard(index - 1);
+  };
+
+  const goNext = () => {
+    if (index < deck.length - 1) goToCard(index + 1);
+  };
+  
   const reset = () => setIndex(0);
 
   const shuffleDeck = () => {
@@ -101,14 +117,27 @@ function App() {
     refreshUserDecks();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        if (index < deck.length - 1) setIndex((prev) => prev + 1);
+      } else if (e.key === "ArrowLeft") {
+        if (index > 0) setIndex((prev) => prev - 1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [index, deck.length]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
       <Typography
         variant="h3"
         sx={{
           fontWeight: 800,
-          mt: 6,
-          mb: 4,
+          mt: 4,
+          mb: 2,
           textAlign: "center",
           color: "#1e293b",
           textShadow: "0 2px 3px rgba(0,0,0,0.15)",
@@ -117,21 +146,77 @@ function App() {
       >
         Flashly
       </Typography>
+      <Typography
+        variant="subtitle1"
+        sx={{
+          mb: 4,
+          color: "#64748b",
+          fontWeight: 400,
+          fontSize: { xs: "0.9rem", sm: "1.1rem" },
+          textAlign: "center",
+        }}
+      >
+        Study smarter, not harder — one card at a time!
+      </Typography>
 
-      <div className="mb-4 w-full">
+      <Box mb={4}>
+        <Paper
+          elevation={3}
+          sx={{
+            px: 2.5,
+            py: 1.5,
+            borderRadius: 2,
+            backgroundColor: "rgba(255, 255, 255, 0.7)",
+            backdropFilter: "blur(6px)",
+            border: "1px solid #e2e8f0",
+            display: "inline-block",
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: "#334155", fontWeight: 400 }}
+          >
+            Studying{" "}
+            <Typography
+              component="span"
+              sx={{ fontWeight: 600, color: "#0f172a" }}
+            >
+              {category.toUpperCase()}
+            </Typography>{" "}
+            · Card {index + 1} / {deck.length}
+          </Typography>
+        </Paper>
+      </Box>
+
+      <Box
+        sx={{
+          width: "100%",
+          mb: { xs: 2, sm: 2 },
+          mt: { xs: 0, sm: 0 },
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexGrow: { xs: 0, sm: 1 },
+          minHeight: { sm: "240px" },
+          maxHeight: { sm: "320px" },
+        }}
+      >
         <Flashcard
           question={currentCard?.question}
           answer={currentCard?.answer}
           showPinyin={showPinyin}
           showTraditional={showTraditional}
           onSaveToList={handleSaveToList}
+          flipped={flipped}
+          setFlipped={setFlipped}
         />
-      </div>
+      </Box>
 
       <LinearProgress
         variant="determinate"
         value={((index + 1) / deck.length) * 100}
         className="w-full max-w-xs sm:max-w-sm mb-4 rounded"
+        sx={{ mt: 2 }}
       />
 
       <div className="flex items-center justify-center gap-6 sm:gap-8 mb-4 text-gray-700">

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import BookmarkAddIcon from "@mui/icons-material/BookmarkAdd";
 
 type QuestionType =
@@ -15,6 +14,8 @@ type FlashcardProps = {
   showPinyin: boolean;
   showTraditional: boolean;
   onSaveToList?: (card: { question: QuestionType; answer: string }) => void;
+  flipped: boolean;
+  setFlipped: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const Flashcard = ({
@@ -23,24 +24,23 @@ const Flashcard = ({
   showPinyin,
   showTraditional,
   onSaveToList,
+  flipped,
+  setFlipped,
 }: FlashcardProps) => {
-  const [flipped, setFlipped] = useState(false);
-  const handleFlip = () => setFlipped(!flipped);
-
   const isStringFront = typeof question === "string";
 
+  const handleFlip = () => {
+    setFlipped((prev) => !prev);
+  };
+
   return (
-    <div
-      className="flex-grow flex items-center justify-center min-h-[50vh] sm:min-h-[60vh] xl:min-h-[80vh] transition-all"
-      onClick={handleFlip}
-    >
-      <div
-        className="w-[90%] max-w-md h-64 sm:h-72 xl:h-80 cursor-pointer perspective"
-      >
+    <div className="flex-grow flex items-center justify-center min-h-[50vh] sm:min-h-[60vh] xl:min-h-[80vh] transition-all">
+      <div className="w-[90%] max-w-md h-64 sm:h-72 xl:h-80 perspective">
         <div
           className={`relative w-full h-full transition-transform duration-700 ease-in-out transform-style-preserve-3d ${
             flipped ? "rotate-y-180" : ""
-          }`}
+          } cursor-pointer`}
+          onClick={handleFlip}
         >
           {/* Front */}
           <div className="absolute w-full h-full p-6 sm:p-8 text-center bg-white/70 backdrop-blur-md border border-gray-300 shadow-2xl hover:scale-[1.03] transition-transform rounded-2xl flex flex-col items-center justify-center backface-hidden">
