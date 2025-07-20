@@ -70,7 +70,7 @@ function App() {
   const goNext = () => {
     if (index < deck.length - 1) goToCard(index + 1);
   };
-  
+
   const reset = () => setIndex(0);
 
   const shuffleDeck = () => {
@@ -111,6 +111,28 @@ function App() {
     parsed.push(card);
     localStorage.setItem(`deck::${deckName}`, JSON.stringify(parsed));
     refreshUserDecks();
+  };
+
+  const isCustomDeck = !Object.prototype.hasOwnProperty.call(
+    hskDecks,
+    category
+  );
+
+  const deleteCurrentCard = () => {
+    if (!isCustomDeck || deck.length === 0) return;
+
+    const updatedDeck = [...deck];
+    updatedDeck.splice(index, 1);
+
+    localStorage.setItem(`deck::${category}`, JSON.stringify(updatedDeck));
+    setDeck(updatedDeck);
+
+    // Prevent out-of-bounds index
+    if (updatedDeck.length === 0) {
+      setIndex(0);
+    } else if (index >= updatedDeck.length) {
+      setIndex(updatedDeck.length - 1);
+    }
   };
 
   useEffect(() => {
@@ -159,99 +181,123 @@ function App() {
         Study smarter, not harder — one card at a time!
       </Typography>
 
-      <Box mb={4}>
-        <Paper
-          elevation={3}
-          sx={{
-            px: 2.5,
-            py: 1.5,
-            borderRadius: 2,
-            backgroundColor: "rgba(255, 255, 255, 0.7)",
-            backdropFilter: "blur(6px)",
-            border: "1px solid #e2e8f0",
-            display: "inline-block",
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{ color: "#334155", fontWeight: 400 }}
-          >
-            Studying{" "}
-            <Typography
-              component="span"
-              sx={{ fontWeight: 600, color: "#0f172a" }}
-            >
-              {category.toUpperCase()}
-            </Typography>{" "}
-            · Card {index + 1} / {deck.length}
-          </Typography>
-        </Paper>
-      </Box>
-
       <Box
         sx={{
           width: "100%",
-          mb: { xs: 2, sm: 2 },
-          mt: { xs: 0, sm: 0 },
+          pb: { xs: 12, sm: 0 },
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          flexGrow: { xs: 0, sm: 1 },
-          minHeight: { sm: "240px" },
-          maxHeight: { sm: "320px" },
         }}
       >
-        <Flashcard
-          question={currentCard?.question}
-          answer={currentCard?.answer}
-          showPinyin={showPinyin}
-          showTraditional={showTraditional}
-          onSaveToList={handleSaveToList}
-          flipped={flipped}
-          setFlipped={setFlipped}
+        <Box mb={4}>
+          <Paper
+            elevation={3}
+            sx={{
+              px: 2.5,
+              py: 1.5,
+              borderRadius: 2,
+              backgroundColor: "rgba(255, 255, 255, 0.7)",
+              backdropFilter: "blur(6px)",
+              border: "1px solid #e2e8f0",
+              display: "inline-block",
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{ color: "#334155", fontWeight: 400 }}
+            >
+              Studying{" "}
+              <Typography
+                component="span"
+                sx={{ fontWeight: 600, color: "#0f172a" }}
+              >
+                {category.toUpperCase()}
+              </Typography>{" "}
+              · Card {index + 1} / {deck.length}
+            </Typography>
+          </Paper>
+        </Box>
+
+        <Box
+          sx={{
+            width: "100%",
+            mb: { xs: 2, sm: 2 },
+            mt: { xs: 0, sm: 0 },
+            px: { xs: 0, sm: 2 },
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            // flexGrow: { xs: 0, sm: 1 },
+            flexGrow: 1,
+            minHeight: { xs: "300px", sm: "350px", md: "420px" },
+            maxHeight: { xs: "400px", sm: "500px", md: "600px" },
+          }}
+        >
+          {deck.length > 0 ? (
+            <Flashcard
+              question={currentCard?.question}
+              answer={currentCard?.answer}
+              showPinyin={showPinyin}
+              showTraditional={showTraditional}
+              onSaveToList={handleSaveToList}
+              flipped={flipped}
+              setFlipped={setFlipped}
+              onDeleteCard={deleteCurrentCard}
+              isDeletable={isCustomDeck}
+            />
+          ) : (
+            <Typography
+              variant="h6"
+              color="text.secondary"
+              align="center"
+              sx={{ mt: 6 }}
+            >
+              No cards left in this deck.
+            </Typography>
+          )}
+        </Box>
+
+        <LinearProgress
+          variant="determinate"
+          value={((index + 1) / deck.length) * 100}
+          className="w-full max-w-xs sm:max-w-sm mb-4 rounded"
+          sx={{ mt: 2 }}
         />
+
+        <div className="flex items-center justify-center gap-6 sm:gap-8 mb-4 text-gray-700">
+          <IconButton onClick={goPrev} disabled={index === 0}>
+            <ArrowBackIcon />
+          </IconButton>
+          <span className="text-sm font-medium">
+            {index + 1} / {deck.length}
+          </span>
+          <IconButton onClick={goNext} disabled={index === deck.length - 1}>
+            <ArrowForwardIcon />
+          </IconButton>
+        </div>
+
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<RestartAltIcon />}
+            onClick={reset}
+            fullWidth
+          >
+            Reset
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<ShuffleIcon />}
+            onClick={shuffleDeck}
+            fullWidth
+          >
+            Shuffle
+          </Button>
+        </Stack>
       </Box>
-
-      <LinearProgress
-        variant="determinate"
-        value={((index + 1) / deck.length) * 100}
-        className="w-full max-w-xs sm:max-w-sm mb-4 rounded"
-        sx={{ mt: 2 }}
-      />
-
-      <div className="flex items-center justify-center gap-6 sm:gap-8 mb-4 text-gray-700">
-        <IconButton onClick={goPrev} disabled={index === 0}>
-          <ArrowBackIcon />
-        </IconButton>
-        <span className="text-sm font-medium">
-          {index + 1} / {deck.length}
-        </span>
-        <IconButton onClick={goNext} disabled={index === deck.length - 1}>
-          <ArrowForwardIcon />
-        </IconButton>
-      </div>
-
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<RestartAltIcon />}
-          onClick={reset}
-          fullWidth
-        >
-          Reset
-        </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<ShuffleIcon />}
-          onClick={shuffleDeck}
-          fullWidth
-        >
-          Shuffle
-        </Button>
-      </Stack>
-
       <BottomControls
         category={category}
         onChangeCategory={changeCategory}

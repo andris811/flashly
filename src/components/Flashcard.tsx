@@ -1,4 +1,5 @@
 import BookmarkAddIcon from "@mui/icons-material/BookmarkAdd";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 type QuestionType =
   | {
@@ -16,6 +17,8 @@ type FlashcardProps = {
   onSaveToList?: (card: { question: QuestionType; answer: string }) => void;
   flipped: boolean;
   setFlipped: React.Dispatch<React.SetStateAction<boolean>>;
+  onDeleteCard?: () => void;
+  isDeletable?: boolean;
 };
 
 const Flashcard = ({
@@ -26,6 +29,8 @@ const Flashcard = ({
   onSaveToList,
   flipped,
   setFlipped,
+  onDeleteCard,
+  isDeletable,
 }: FlashcardProps) => {
   const isStringFront = typeof question === "string";
 
@@ -34,7 +39,7 @@ const Flashcard = ({
   };
 
   return (
-    <div className="flex-grow flex items-center justify-center min-h-[50vh] sm:min-h-[60vh] xl:min-h-[80vh] transition-all">
+    <div className="flex-grow flex items-center justify-center py-8 sm:py-12 transition-all">
       <div className="w-[90%] max-w-md h-64 sm:h-72 xl:h-80 perspective">
         <div
           className={`relative w-full h-full transition-transform duration-700 ease-in-out transform-style-preserve-3d ${
@@ -57,13 +62,26 @@ const Flashcard = ({
               </button>
             )}
 
+            {isDeletable && onDeleteCard && (
+              <button
+                className="absolute bottom-3 right-3 text-red-600 hover:text-red-800"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteCard();
+                }}
+                aria-label="Delete card"
+              >
+                <DeleteIcon fontSize="medium" />
+              </button>
+            )}
+
             {isStringFront ? (
               <div className="text-lg sm:text-xl xl:text-2xl font-medium text-gray-900">
                 {question}
               </div>
             ) : (
               <>
-                <div className="text-3xl sm:text-4xl xl:text-5xl font-extrabold text-gray-800 mb-1">
+                <div className="text-2xl sm:text-4xl xl:text-5xl font-extrabold text-gray-800 mb-1">
                   {question.simplified}
                 </div>
                 {showTraditional && question.traditional && (

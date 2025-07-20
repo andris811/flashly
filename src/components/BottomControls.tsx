@@ -254,8 +254,8 @@ const BottomControls = ({
         <Box
           sx={{
             width: "100%",
-            marginTop: "0.75rem",
-            paddingTop: "0.5rem",
+            marginTop: "0.5rem",
+            paddingTop: "0.25rem",
             borderTop: "1px solid #ddd",
             display: "flex",
             justifyContent: "space-between",
