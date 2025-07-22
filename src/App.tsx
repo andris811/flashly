@@ -140,17 +140,19 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") {
-        if (index < deck.length - 1) setIndex((prev) => prev + 1);
-      } else if (e.key === "ArrowLeft") {
-        if (index > 0) setIndex((prev) => prev - 1);
-      }
-    };
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "ArrowRight") {
+      if (index < deck.length - 1) goToCard(index + 1);
+    } else if (e.key === "ArrowLeft") {
+      if (index > 0) goToCard(index - 1);
+    } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      setFlipped((prev) => !prev);
+    }
+  };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [index, deck.length]);
+  window.addEventListener("keydown", handleKeyDown);
+  return () => window.removeEventListener("keydown", handleKeyDown);
+}, [index, deck.length]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
