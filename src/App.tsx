@@ -16,6 +16,9 @@ import {
   Typography,
   Paper,
   Box,
+  Dialog,
+  DialogTitle,
+  DialogActions,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -35,9 +38,17 @@ type FlashcardData = {
 };
 
 function App() {
-  const [category, setCategory] = useState<string>("hsk1");
-  const [deck, setDeck] = useState<FlashcardData[]>(getDeckData("hsk1"));
-  const [index, setIndex] = useState(0);
+  const initialCategory = localStorage.getItem("lastCategory") || "hsk1";
+  const initialDeck = getDeckData(initialCategory);
+  const savedIndex = parseInt(
+    localStorage.getItem(`progress::${initialCategory}`) || "0",
+    10
+  );
+  const safeIndex = Math.min(savedIndex, initialDeck.length - 1);
+
+  const [category, setCategory] = useState<string>(initialCategory);
+  const [deck, setDeck] = useState<FlashcardData[]>(initialDeck);
+  const [index, setIndex] = useState<number>(safeIndex);
   const [userDecks, setUserDecks] = useState<string[]>([]);
   const [showPinyin, setShowPinyin] = useState(true);
   const [showTraditional, setShowTraditional] = useState(true);
@@ -45,11 +56,21 @@ function App() {
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [cardToSave, setCardToSave] = useState<FlashcardData | null>(null);
   const [flipped, setFlipped] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  const setIndexWithSave = (newIndex: number) => {
+    setIndex(newIndex);
+    localStorage.setItem(`progress::${category}`, String(newIndex));
+  };
 
   function getDeckData(name: string): FlashcardData[] {
+    const saved = localStorage.getItem(`deckOrder::${name}`);
+    if (saved) return JSON.parse(saved);
+
     if (Object.prototype.hasOwnProperty.call(hskDecks, name)) {
       return hskDecks[name as HSKLevel];
     }
+
     const stored = localStorage.getItem(`deck::${name}`);
     return stored ? (JSON.parse(stored) as FlashcardData[]) : [];
   }
@@ -59,7 +80,7 @@ function App() {
   const goToCard = (newIndex: number) => {
     setFlipped(false); // Trigger flip back
     setTimeout(() => {
-      setIndex(newIndex);
+      setIndexWithSave(newIndex);
     }, 300); // match your CSS transition duration (usually 300–400ms)
   };
 
@@ -71,18 +92,33 @@ function App() {
     if (index < deck.length - 1) goToCard(index + 1);
   };
 
-  const reset = () => setIndex(0);
+  const reset = () => {
+    localStorage.removeItem(`progress::${category}`);
+    localStorage.removeItem(`deckOrder::${category}`);
+    const original = getDeckData(category); // Will return default if nothing is stored
+    setDeck(original);
+    setIndex(0);
+  };
 
   const shuffleDeck = () => {
     const shuffled = [...deck].sort(() => Math.random() - 0.5);
     setDeck(shuffled);
-    setIndex(0);
+    localStorage.setItem(`deckOrder::${category}`, JSON.stringify(shuffled));
+    setIndexWithSave(0);
   };
 
   const changeCategory = (newCategory: string) => {
+    const newDeck = getDeckData(newCategory);
+    const savedIndex = parseInt(
+      localStorage.getItem(`progress::${newCategory}`) || "0",
+      10
+    );
+    const safeIndex = Math.min(savedIndex, newDeck.length - 1);
+
+    localStorage.setItem("lastCategory", newCategory);
     setCategory(newCategory);
-    setDeck(getDeckData(newCategory));
-    setIndex(0);
+    setDeck(newDeck);
+    setIndex(safeIndex);
   };
 
   const refreshUserDecks = () => {
@@ -129,9 +165,9 @@ function App() {
 
     // Prevent out-of-bounds index
     if (updatedDeck.length === 0) {
-      setIndex(0);
+      setIndexWithSave(0);
     } else if (index >= updatedDeck.length) {
-      setIndex(updatedDeck.length - 1);
+      setIndexWithSave(updatedDeck.length - 1);
     }
   };
 
@@ -139,20 +175,18 @@ function App() {
     refreshUserDecks();
   }, []);
 
-  useEffect(() => {
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "ArrowRight") {
-      if (index < deck.length - 1) goToCard(index + 1);
-    } else if (e.key === "ArrowLeft") {
-      if (index > 0) goToCard(index - 1);
-    } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-      setFlipped((prev) => !prev);
-    }
-  };
+  if (e.key === "ArrowRight" && index < deck.length - 1) goToCard(index + 1);
+  else if (e.key === "ArrowLeft" && index > 0) goToCard(index - 1);
+  else if (e.key === "ArrowUp" || e.key === "ArrowDown") setFlipped((f) => !f);
+};
 
+// eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => {
   window.addEventListener("keydown", handleKeyDown);
   return () => window.removeEventListener("keydown", handleKeyDown);
-}, [index, deck.length]);
+}, [index, deck.length, goToCard]);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
@@ -284,7 +318,7 @@ function App() {
             variant="outlined"
             size="small"
             startIcon={<RestartAltIcon />}
-            onClick={reset}
+            onClick={() => setShowResetConfirm(true)}
             fullWidth
           >
             Reset
@@ -300,6 +334,24 @@ function App() {
           </Button>
         </Stack>
       </Box>
+      <Dialog
+        open={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+      >
+        <DialogTitle>Reset deck progress and order?</DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setShowResetConfirm(false)}>Cancel</Button>
+          <Button
+            color="error"
+            onClick={() => {
+              reset();
+              setShowResetConfirm(false);
+            }}
+          >
+            Reset
+          </Button>
+        </DialogActions>
+      </Dialog>
       <BottomControls
         category={category}
         onChangeCategory={changeCategory}
