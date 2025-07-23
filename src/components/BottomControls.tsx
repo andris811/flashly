@@ -43,6 +43,7 @@ type Flashcard = {
 type SearchResult = {
   deck: string;
   card: Flashcard;
+  index: number;
 };
 
 type Props = {
@@ -121,7 +122,9 @@ const BottomControls = ({
     }
 
     const matches: SearchResult[] = [];
+    const term = searchTerm.toLowerCase();
 
+    // Custom decks (localStorage)
     const allKeys = Object.keys(localStorage).filter((key) =>
       key.startsWith("deck::")
     );
@@ -132,40 +135,54 @@ const BottomControls = ({
       if (!raw) continue;
 
       try {
-        const cards: unknown = JSON.parse(raw);
-
-        if (!Array.isArray(cards)) continue;
-
-        for (const card of cards) {
-          if (
-            typeof card === "object" &&
-            card !== null &&
-            "question" in card &&
-            "answer" in card
-          ) {
-            const q = Array.isArray(card.question)
+        const cards: Flashcard[] = JSON.parse(raw);
+        cards.forEach((card, i) => {
+          const q =
+            typeof card.question === "string"
+              ? card.question
+              : Array.isArray(card.question)
               ? card.question.join(" ")
-              : String(card.question);
-            const a = Array.isArray(card.answer)
-              ? card.answer.join(" ")
-              : String(card.answer);
+              : card.question?.simplified || "";
 
-            if (
-              q.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              a.toLowerCase().includes(searchTerm.toLowerCase())
-            ) {
-              matches.push({ deck: deckName, card: card as Flashcard });
-            }
+          const a = Array.isArray(card.answer)
+            ? card.answer.join(" ")
+            : String(card.answer);
+
+          const regex = new RegExp(`\\b${term}\\b`, "i");
+
+          if (regex.test(q) || regex.test(a)) {
+            matches.push({ deck: deckName, card, index: i });
           }
-        }
+        });
       } catch (err) {
         console.warn(`Skipping malformed deck "${deckName}":`, err);
-        continue;
       }
     }
 
+    // HSK decks
+    Object.entries(hskDeckData).forEach(([deckName, cards]) => {
+      cards.forEach((card, i) => {
+        const q =
+          typeof card.question === "string"
+            ? card.question
+            : Array.isArray(card.question)
+            ? card.question.join(" ")
+            : card.question?.simplified || "";
+
+        const a = Array.isArray(card.answer)
+          ? card.answer.join(" ")
+          : String(card.answer);
+
+        const regex = new RegExp(`\\b${term}\\b`, "i");
+
+        if (regex.test(q) || regex.test(a)) {
+          matches.push({ deck: deckName, card, index: i });
+        }
+      });
+    });
+
     setSearchResults(matches);
-  }, [searchTerm]);
+  }, [searchTerm, hskDeckData]);
 
   const handleSearch = () => {
     const term = searchTerm.trim().toLowerCase();
@@ -451,8 +468,21 @@ const BottomControls = ({
             Matches:
           </Typography>
           <Box sx={{ maxHeight: 300, overflowY: "auto" }}>
-            {searchResults.map(({ deck, card }, i) => (
-              <Box key={i} sx={{ mb: 2, p: 1, borderBottom: "1px solid #eee" }}>
+            {searchResults.map(({ deck, card, index }, i) => (
+              <Box
+                key={i}
+                onClick={() => {
+                  onJumpToDeckAndCard(deck, index);
+                  setSearchDialogOpen(false);
+                }}
+                sx={{
+                  mb: 2,
+                  p: 1,
+                  borderBottom: "1px solid #eee",
+                  cursor: "pointer",
+                  "&:hover": { backgroundColor: "#f9fafb" },
+                }}
+              >
                 <Typography variant="caption" color="text.secondary">
                   Deck: {deck}
                 </Typography>
@@ -462,13 +492,7 @@ const BottomControls = ({
                     ? card.question
                     : Array.isArray(card.question)
                     ? card.question.join(" / ")
-                    : `${card.question.simplified}${
-                        card.question.traditional
-                          ? " / " + card.question.traditional
-                          : ""
-                      }${
-                        card.question.pinyin ? " / " + card.question.pinyin : ""
-                      }`}
+                    : card.question?.simplified}
                 </Typography>
                 <Typography variant="body2">
                   A:{" "}
@@ -478,6 +502,7 @@ const BottomControls = ({
                 </Typography>
               </Box>
             ))}
+
             {searchTerm && searchResults.length === 0 && (
               <Typography variant="body2" color="text.secondary">
                 No matches found.
