@@ -76,12 +76,24 @@ const Flashcard = ({
             )}
 
             {isStringFront ? (
-              <div className="text-lg sm:text-xl xl:text-2xl font-medium text-gray-900">
-                {question}
+              <div className="flex flex-col items-center gap-1 text-gray-900">
+                {String(question)
+                  .split(" | ")
+                  .slice(0, 3)
+                  .map((line, i) => (
+                    <div
+                      key={i}
+                      className={`text-base sm:text-lg xl:text-xl ${
+                        i === 0 ? "font-semibold" : "text-gray-600"
+                      }`}
+                    >
+                      {line}
+                    </div>
+                  ))}
               </div>
             ) : (
               <>
-                <div className="text-2xl sm:text-4xl xl:text-5xl font-extrabold text-gray-800 mb-1">
+                <div className="text-3xl sm:text-4xl xl:text-5xl font-extrabold text-gray-800 mb-1">
                   {question.simplified}
                 </div>
                 {showTraditional && question.traditional && (
@@ -100,8 +112,20 @@ const Flashcard = ({
 
           {/* Back */}
           <div className="absolute w-full h-full p-6 sm:p-8 text-center bg-gradient-to-br from-indigo-100 to-blue-100 text-gray-900 border border-gray-300 shadow-2xl hover:scale-[1.03] transition-transform rounded-2xl flex items-center justify-center rotate-y-180 backface-hidden">
-            <div className="text-lg sm:text-xl xl:text-2xl font-semibold leading-snug">
-              {answer}
+            <div className="flex flex-col items-center gap-1 text-gray-900">
+              {String(answer)
+                .split(" | ")
+                .slice(0, 3)
+                .map((line, i) => (
+                  <div
+                    key={i}
+                    className={`text-base sm:text-lg xl:text-xl ${
+                      i === 0 ? "font-semibold" : "text-gray-600"
+                    }`}
+                  >
+                    {line}
+                  </div>
+                ))}
             </div>
           </div>
         </div>

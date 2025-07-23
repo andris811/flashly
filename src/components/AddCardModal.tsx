@@ -18,7 +18,12 @@ type AddCardModalProps = {
   existingDecks: string[]; // include custom + built-in deck names
 };
 
-const AddCardModal = ({ open, onClose, onCardAdded, existingDecks }: AddCardModalProps) => {
+const AddCardModal = ({
+  open,
+  onClose,
+  onCardAdded,
+  existingDecks,
+}: AddCardModalProps) => {
   const [deck, setDeck] = useState("mydeck");
   const [customDeck, setCustomDeck] = useState("");
   const [front, setFront] = useState([""]);
@@ -103,7 +108,9 @@ const AddCardModal = ({ open, onClose, onCardAdded, existingDecks }: AddCardModa
 
           {/* Front Fields */}
           <div>
-            <Typography variant="subtitle2">Card Front (at least one)</Typography>
+            <Typography variant="subtitle2">
+              Card Front (at least one)
+            </Typography>
             {front.map((value, i) => (
               <TextField
                 key={i}
@@ -114,14 +121,18 @@ const AddCardModal = ({ open, onClose, onCardAdded, existingDecks }: AddCardModa
                 margin="dense"
               />
             ))}
-            <Button onClick={addFrontField} size="small">
-              + Add Field
-            </Button>
+            {front.length < 3 && (
+              <Button onClick={addFrontField} size="small">
+                + Add Field
+              </Button>
+            )}
           </div>
 
           {/* Back Fields */}
           <div>
-            <Typography variant="subtitle2">Card Back (at least one)</Typography>
+            <Typography variant="subtitle2">
+              Card Back (at least one)
+            </Typography>
             {back.map((value, i) => (
               <TextField
                 key={i}
@@ -132,9 +143,11 @@ const AddCardModal = ({ open, onClose, onCardAdded, existingDecks }: AddCardModa
                 margin="dense"
               />
             ))}
-            <Button onClick={addBackField} size="small">
-              + Add Field
-            </Button>
+            {back.length < 3 && (
+              <Button onClick={addBackField} size="small">
+                + Add Field
+              </Button>
+            )}
           </div>
         </Stack>
       </DialogContent>
@@ -144,7 +157,8 @@ const AddCardModal = ({ open, onClose, onCardAdded, existingDecks }: AddCardModa
         <Button
           onClick={handleSubmit}
           disabled={
-            front.every((f) => f.trim() === "") || back.every((b) => b.trim() === "")
+            front.every((f) => f.trim() === "") ||
+            back.every((b) => b.trim() === "")
           }
         >
           Save
