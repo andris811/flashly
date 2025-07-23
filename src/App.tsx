@@ -4,6 +4,7 @@ import BottomControls from "./components/BottomControls";
 import AddCardModal from "./components/AddCardModal";
 import SaveToListModal from "./components/SaveToListModal";
 import Footer from "./components/Footer";
+import type { FlashcardData } from "../src/types/Flashcard";
 
 import { hskDecks } from "./data/hskDecks";
 import type { HSKLevel } from "./data/hskDecks";
@@ -24,18 +25,6 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-
-// Define the card structure
-type FlashcardData = {
-  question:
-    | {
-        simplified: string;
-        traditional?: string;
-        pinyin?: string;
-      }
-    | string;
-  answer: string;
-};
 
 function App() {
   const initialCategory = localStorage.getItem("lastCategory") || "hsk1";
@@ -78,10 +67,10 @@ function App() {
   const currentCard = deck[index];
 
   const goToCard = (newIndex: number) => {
-    setFlipped(false); // Trigger flip back
+    setFlipped(false);
     setTimeout(() => {
       setIndexWithSave(newIndex);
-    }, 300); // match your CSS transition duration (usually 300–400ms)
+    }, 300);
   };
 
   const goPrev = () => {
@@ -95,7 +84,7 @@ function App() {
   const reset = () => {
     localStorage.removeItem(`progress::${category}`);
     localStorage.removeItem(`deckOrder::${category}`);
-    const original = getDeckData(category); // Will return default if nothing is stored
+    const original = getDeckData(category);
     setDeck(original);
     setIndex(0);
   };
@@ -163,7 +152,6 @@ function App() {
     localStorage.setItem(`deck::${category}`, JSON.stringify(updatedDeck));
     setDeck(updatedDeck);
 
-    // Prevent out-of-bounds index
     if (updatedDeck.length === 0) {
       setIndexWithSave(0);
     } else if (index >= updatedDeck.length) {
@@ -171,22 +159,28 @@ function App() {
     }
   };
 
+  const jumpToDeckAndCard = (deckName: string, index: number) => {
+    const newDeck = getDeckData(deckName);
+    setCategory(deckName);
+    setDeck(newDeck);
+    goToCard(index);
+  };
+
   useEffect(() => {
     refreshUserDecks();
   }, []);
 
   const handleKeyDown = (e: KeyboardEvent) => {
-  if (e.key === "ArrowRight" && index < deck.length - 1) goToCard(index + 1);
-  else if (e.key === "ArrowLeft" && index > 0) goToCard(index - 1);
-  else if (e.key === "ArrowUp" || e.key === "ArrowDown") setFlipped((f) => !f);
-};
+    if (e.key === "ArrowRight" && index < deck.length - 1) goToCard(index + 1);
+    else if (e.key === "ArrowLeft" && index > 0) goToCard(index - 1);
+    else if (e.key === "ArrowUp" || e.key === "ArrowDown")
+      setFlipped((f) => !f);
+  };
 
-// eslint-disable-next-line react-hooks/exhaustive-deps
-useEffect(() => {
-  window.addEventListener("keydown", handleKeyDown);
-  return () => window.removeEventListener("keydown", handleKeyDown);
-}, [index, deck.length, goToCard]);
-
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [index, deck.length]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
@@ -363,8 +357,9 @@ useEffect(() => {
         toggleTraditional={() => setShowTraditional((prev) => !prev)}
         onAddCard={() => setIsModalOpen(true)}
         onDeleteDeck={handleDeleteDeck}
+        onJumpToDeckAndCard={jumpToDeckAndCard}
+        hskDeckData={hskDecks}
       />
-
       <AddCardModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -375,7 +370,6 @@ useEffect(() => {
         }}
         existingDecks={userDecks}
       />
-
       <SaveToListModal
         open={saveModalOpen}
         onClose={() => setSaveModalOpen(false)}
@@ -383,7 +377,6 @@ useEffect(() => {
         card={cardToSave}
         onSave={handleSaveToDeck}
       />
-      {/* Desktop footer */}
       <div className="hidden sm:block w-full mt-auto">
         <Footer />
       </div>

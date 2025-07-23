@@ -1,24 +1,42 @@
 import BookmarkAddIcon from "@mui/icons-material/BookmarkAdd";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-type QuestionType =
-  | {
-      simplified: string;
-      traditional?: string;
-      pinyin?: string;
-    }
-  | string;
+type HSKCardFront = {
+  simplified: string;
+  traditional?: string;
+  pinyin?: string;
+};
+
+type QuestionType = HSKCardFront | string | string[];
 
 type FlashcardProps = {
   question: QuestionType;
-  answer: string;
+  answer: string | string[];
   showPinyin: boolean;
   showTraditional: boolean;
-  onSaveToList?: (card: { question: QuestionType; answer: string }) => void;
+  onSaveToList?: (card: { question: QuestionType; answer: string | string[] }) => void;
   flipped: boolean;
   setFlipped: React.Dispatch<React.SetStateAction<boolean>>;
   onDeleteCard?: () => void;
   isDeletable?: boolean;
+};
+
+const isHSKCard = (q: QuestionType): q is HSKCardFront =>
+  typeof q === "object" && q !== null && "simplified" in q;
+
+const renderLines = (
+  content: string | string[],
+  fontSize = "text-base sm:text-lg xl:text-xl"
+) => {
+  const lines = Array.isArray(content) ? content : content.split(" | ");
+  return lines.slice(0, 3).map((line, i) => (
+    <div
+      key={i}
+      className={`${fontSize} ${i === 0 ? "font-semibold" : "text-gray-600"}`}
+    >
+      {line}
+    </div>
+  ));
 };
 
 const Flashcard = ({
@@ -32,8 +50,6 @@ const Flashcard = ({
   onDeleteCard,
   isDeletable,
 }: FlashcardProps) => {
-  const isStringFront = typeof question === "string";
-
   const handleFlip = () => {
     setFlipped((prev) => !prev);
   };
@@ -75,23 +91,7 @@ const Flashcard = ({
               </button>
             )}
 
-            {isStringFront ? (
-              <div className="flex flex-col items-center gap-1 text-gray-900">
-                {String(question)
-                  .split(" | ")
-                  .slice(0, 3)
-                  .map((line, i) => (
-                    <div
-                      key={i}
-                      className={`text-base sm:text-lg xl:text-xl ${
-                        i === 0 ? "font-semibold" : "text-gray-600"
-                      }`}
-                    >
-                      {line}
-                    </div>
-                  ))}
-              </div>
-            ) : (
+            {isHSKCard(question) ? (
               <>
                 <div className="text-3xl sm:text-4xl xl:text-5xl font-extrabold text-gray-800 mb-1">
                   {question.simplified}
@@ -107,25 +107,17 @@ const Flashcard = ({
                   </div>
                 )}
               </>
+            ) : (
+              <div className="flex flex-col items-center gap-1 text-gray-900">
+                {renderLines(question)}
+              </div>
             )}
           </div>
 
           {/* Back */}
           <div className="absolute w-full h-full p-6 sm:p-8 text-center bg-gradient-to-br from-indigo-100 to-blue-100 text-gray-900 border border-gray-300 shadow-2xl hover:scale-[1.03] transition-transform rounded-2xl flex items-center justify-center rotate-y-180 backface-hidden">
             <div className="flex flex-col items-center gap-1 text-gray-900">
-              {String(answer)
-                .split(" | ")
-                .slice(0, 3)
-                .map((line, i) => (
-                  <div
-                    key={i}
-                    className={`text-base sm:text-lg xl:text-xl ${
-                      i === 0 ? "font-semibold" : "text-gray-600"
-                    }`}
-                  >
-                    {line}
-                  </div>
-                ))}
+              {renderLines(answer)}
             </div>
           </div>
         </div>

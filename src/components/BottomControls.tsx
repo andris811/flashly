@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   FormControlLabel,
@@ -9,10 +9,12 @@ import {
   MenuItem,
   useMediaQuery,
   Dialog,
+  DialogContent,
   DialogTitle,
   DialogActions,
   Button,
   Link,
+  TextField,
   Typography,
 } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
@@ -24,6 +26,24 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import type { HSKLevel } from "../data/hskDecks";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import SearchIcon from "@mui/icons-material/Search";
+
+type Flashcard = {
+  question:
+    | string
+    | string[]
+    | {
+        simplified: string;
+        traditional?: string;
+        pinyin?: string;
+      };
+  answer: string | string[];
+};
+
+type SearchResult = {
+  deck: string;
+  card: Flashcard;
+};
 
 type Props = {
   category: string;
@@ -36,6 +56,8 @@ type Props = {
   toggleTraditional: () => void;
   onAddCard: () => void;
   onDeleteDeck: (deckName: string) => void;
+  onJumpToDeckAndCard: (deck: string, cardIndex: number) => void;
+  hskDeckData: Record<string, Flashcard[]>;
 };
 
 const BottomControls = ({
@@ -49,6 +71,8 @@ const BottomControls = ({
   toggleTraditional,
   onAddCard,
   onDeleteDeck,
+  onJumpToDeckAndCard,
+  hskDeckData,
 }: Props) => {
   const isMobile = useMediaQuery("(max-width: 640px)");
   const [anchorHSK, setAnchorHSK] = useState<null | HTMLElement>(null);
@@ -57,6 +81,9 @@ const BottomControls = ({
   const [confirmDeleteDeck, setConfirmDeleteDeck] = useState<string | null>(
     null
   );
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 
   const layoutStyles: SxProps<Theme> = isMobile
     ? {
@@ -86,6 +113,153 @@ const BottomControls = ({
       };
 
   const year = new Date().getFullYear();
+
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const matches: SearchResult[] = [];
+
+    const allKeys = Object.keys(localStorage).filter((key) =>
+      key.startsWith("deck::")
+    );
+
+    for (const key of allKeys) {
+      const deckName = key.replace("deck::", "");
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+
+      try {
+        const cards: unknown = JSON.parse(raw);
+
+        if (!Array.isArray(cards)) continue;
+
+        for (const card of cards) {
+          if (
+            typeof card === "object" &&
+            card !== null &&
+            "question" in card &&
+            "answer" in card
+          ) {
+            const q = Array.isArray(card.question)
+              ? card.question.join(" ")
+              : String(card.question);
+            const a = Array.isArray(card.answer)
+              ? card.answer.join(" ")
+              : String(card.answer);
+
+            if (
+              q.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              a.toLowerCase().includes(searchTerm.toLowerCase())
+            ) {
+              matches.push({ deck: deckName, card: card as Flashcard });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`Skipping malformed deck "${deckName}":`, err);
+        continue;
+      }
+    }
+
+    setSearchResults(matches);
+  }, [searchTerm]);
+
+  const handleSearch = () => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return;
+
+    const allKeys = Object.keys(localStorage).filter((key) =>
+      key.startsWith("deck::")
+    );
+
+    for (const key of allKeys) {
+      const deckName = key.replace("deck::", "");
+      const deckData = localStorage.getItem(key);
+      if (!deckData) continue;
+
+      let cards: Flashcard[] = [];
+
+      try {
+        const parsed = JSON.parse(deckData);
+        if (!Array.isArray(parsed)) continue;
+
+        // Validate and cast entries
+        cards = parsed.filter(
+          (item): item is Flashcard =>
+            item &&
+            typeof item === "object" &&
+            ("question" in item || "answer" in item)
+        );
+      } catch (err) {
+        console.warn(`Error parsing deck ${deckName}:`, err);
+        continue;
+      }
+
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+
+        const questionText = Array.isArray(card.question)
+          ? card.question.join(" ").toLowerCase()
+          : typeof card.question === "string"
+          ? card.question.toLowerCase()
+          : "";
+
+        const answerText = Array.isArray(card.answer)
+          ? card.answer.join(" ").toLowerCase()
+          : typeof card.answer === "string"
+          ? card.answer.toLowerCase()
+          : "";
+
+        const pattern = new RegExp(`\\b${term}\\b`, "i");
+        if (pattern.test(questionText) || pattern.test(answerText)) {
+          onJumpToDeckAndCard(deckName, i);
+          setSearchDialogOpen(false);
+          return;
+        }
+        // console.log("TERM:", term, "Q:", questionText, "A:", answerText);
+      }
+    }
+
+    // Check HSK decks
+    for (const [deckName, cards] of Object.entries(hskDeckData)) {
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+
+        let q = "";
+
+        if (typeof card.question === "string") {
+          q = card.question.toLowerCase();
+        } else if (Array.isArray(card.question)) {
+          q = card.question.join(" ").toLowerCase();
+        } else if (
+          typeof card.question === "object" &&
+          card.question !== null
+        ) {
+          const {
+            simplified = "",
+            traditional = "",
+            pinyin = "",
+          } = card.question;
+          q = `${simplified} ${traditional} ${pinyin}`.toLowerCase();
+        }
+
+        const a = Array.isArray(card.answer)
+          ? card.answer.join(" ").toLowerCase()
+          : card.answer.toLowerCase();
+
+        if (q.includes(term) || a.includes(term)) {
+          onJumpToDeckAndCard(deckName, i);
+          setSearchDialogOpen(false);
+          return;
+        }
+      }
+    }
+
+    alert("No matching flashcard found.");
+  };
 
   return (
     <Box sx={layoutStyles}>
@@ -176,6 +350,14 @@ const BottomControls = ({
           )}
         </Menu>
 
+        {/* Search cards */}
+        <IconButton
+          onClick={() => setSearchDialogOpen(true)}
+          aria-label="Search Flashcards"
+        >
+          <SearchIcon />
+        </IconButton>
+
         {/* Add Card */}
         <Fab
           color="primary"
@@ -223,31 +405,91 @@ const BottomControls = ({
             />
           </MenuItem>
         </Menu>
-
-        {/* Confirm Delete Dialog */}
-        <Dialog
-          open={!!confirmDeleteDeck}
-          onClose={() => setConfirmDeleteDeck(null)}
-        >
-          <DialogTitle>
-            {`Delete deck "${confirmDeleteDeck}"? This cannot be undone.`}
-          </DialogTitle>
-          <DialogActions>
-            <Button onClick={() => setConfirmDeleteDeck(null)}>Cancel</Button>
-            <Button
-              color="error"
-              onClick={() => {
-                if (confirmDeleteDeck) {
-                  onDeleteDeck(confirmDeleteDeck);
-                  setConfirmDeleteDeck(null);
-                }
-              }}
-            >
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Box>
+
+      {/* Confirm Delete Dialog */}
+      <Dialog
+        open={!!confirmDeleteDeck}
+        onClose={() => setConfirmDeleteDeck(null)}
+      >
+        <DialogTitle>
+          {`Delete deck "${confirmDeleteDeck}"? This cannot be undone.`}
+        </DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setConfirmDeleteDeck(null)}>Cancel</Button>
+          <Button
+            color="error"
+            onClick={() => {
+              if (confirmDeleteDeck) {
+                onDeleteDeck(confirmDeleteDeck);
+                setConfirmDeleteDeck(null);
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Search Dialog */}
+      <Dialog
+        open={searchDialogOpen}
+        onClose={() => setSearchDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Search Flashcards</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Search term"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+          <Typography variant="body2" sx={{ mt: 1, mb: 1 }}>
+            Matches:
+          </Typography>
+          <Box sx={{ maxHeight: 300, overflowY: "auto" }}>
+            {searchResults.map(({ deck, card }, i) => (
+              <Box key={i} sx={{ mb: 2, p: 1, borderBottom: "1px solid #eee" }}>
+                <Typography variant="caption" color="text.secondary">
+                  Deck: {deck}
+                </Typography>
+                <Typography variant="body1">
+                  Q:{" "}
+                  {typeof card.question === "string"
+                    ? card.question
+                    : Array.isArray(card.question)
+                    ? card.question.join(" / ")
+                    : `${card.question.simplified}${
+                        card.question.traditional
+                          ? " / " + card.question.traditional
+                          : ""
+                      }${
+                        card.question.pinyin ? " / " + card.question.pinyin : ""
+                      }`}
+                </Typography>
+                <Typography variant="body2">
+                  A:{" "}
+                  {Array.isArray(card.answer)
+                    ? card.answer.join(" / ")
+                    : card.answer}
+                </Typography>
+              </Box>
+            ))}
+            {searchTerm && searchResults.length === 0 && (
+              <Typography variant="body2" color="text.secondary">
+                No matches found.
+              </Typography>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSearchDialogOpen(false)}>Close</Button>
+          <Button onClick={handleSearch}>Search</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Mobile footer */}
       {isMobile && (

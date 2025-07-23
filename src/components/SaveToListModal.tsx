@@ -10,17 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
-
-type FlashcardData = {
-  question:
-    | {
-        simplified: string;
-        traditional?: string;
-        pinyin?: string;
-      }
-    | string;
-  answer: string;
-};
+import type { FlashcardData } from "../types/Flashcard";
 
 type Props = {
   open: boolean;
