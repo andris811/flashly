@@ -67,7 +67,7 @@ const Flashcard = ({
           <div className="absolute w-full h-full p-6 sm:p-8 text-center bg-white/70 backdrop-blur-md border border-gray-300 shadow-2xl hover:scale-[1.03] transition-transform rounded-2xl flex flex-col items-center justify-center backface-hidden">
             {onSaveToList && (
               <button
-                className="absolute top-3 right-3 text-blue-600 hover:text-blue-800"
+                className="absolute top-3 right-3 text-gray-600 hover:text-gray-800"
                 onClick={(e) => {
                   e.stopPropagation();
                   onSaveToList({ question, answer });
@@ -93,7 +93,7 @@ const Flashcard = ({
 
             {isHSKCard(question) ? (
               <>
-                <div className="text-3xl sm:text-4xl xl:text-5xl font-extrabold text-gray-800 mb-1">
+                <div className="text-6xl sm:text-7xl xl:text-8xl font-bold text-gray-800 mb-1">
                   {question.simplified}
                 </div>
                 {showTraditional && question.traditional && (
@@ -102,7 +102,7 @@ const Flashcard = ({
                   </div>
                 )}
                 {showPinyin && question.pinyin && (
-                  <div className="text-base sm:text-lg text-blue-600 mt-1">
+                  <div className="text-base sm:text-lg text-gray-600 mt-1">
                     {question.pinyin}
                   </div>
                 )}
