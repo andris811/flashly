@@ -25,10 +25,17 @@ const isHSKCard = (q: QuestionType): q is HSKCardFront =>
   typeof q === "object" && q !== null && "simplified" in q;
 
 const renderLines = (
-  content: string | string[],
+  content: string | string[] | undefined,
   fontSize = "text-base sm:text-lg xl:text-xl"
 ) => {
-  const lines = Array.isArray(content) ? content : content.split(" | ");
+  const text = Array.isArray(content)
+    ? content.join(" | ")
+    : typeof content === "string"
+    ? content
+    : "";
+
+  const lines = text.split(" | ");
+
   return lines.slice(0, 3).map((line, i) => (
     <div
       key={i}

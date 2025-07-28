@@ -43,7 +43,6 @@ type Flashcard = {
 type SearchResult = {
   deck: string;
   card: Flashcard;
-  index: number;
 };
 
 type Props = {
@@ -57,7 +56,7 @@ type Props = {
   toggleTraditional: () => void;
   onAddCard: () => void;
   onDeleteDeck: (deckName: string) => void;
-  onJumpToDeckAndCard: (deck: string, cardIndex: number) => void;
+  onJumpToDeckAndCard: (deck: string, card: Flashcard) => void;
   hskDeckData: Record<string, Flashcard[]>;
 };
 
@@ -136,7 +135,7 @@ const BottomControls = ({
 
       try {
         const cards: Flashcard[] = JSON.parse(raw);
-        cards.forEach((card, i) => {
+        cards.forEach((card) => {
           const q =
             typeof card.question === "string"
               ? card.question
@@ -151,7 +150,7 @@ const BottomControls = ({
           const regex = new RegExp(`\\b${term}\\b`, "i");
 
           if (regex.test(q) || regex.test(a)) {
-            matches.push({ deck: deckName, card, index: i });
+            matches.push({ deck: deckName, card });
           }
         });
       } catch (err) {
@@ -161,7 +160,7 @@ const BottomControls = ({
 
     // HSK decks
     Object.entries(hskDeckData).forEach(([deckName, cards]) => {
-      cards.forEach((card, i) => {
+      cards.forEach((card) => {
         const q =
           typeof card.question === "string"
             ? card.question
@@ -176,7 +175,7 @@ const BottomControls = ({
         const regex = new RegExp(`\\b${term}\\b`, "i");
 
         if (regex.test(q) || regex.test(a)) {
-          matches.push({ deck: deckName, card, index: i });
+          matches.push({ deck: deckName, card });
         }
       });
     });
@@ -232,7 +231,7 @@ const BottomControls = ({
 
         const pattern = new RegExp(`\\b${term}\\b`, "i");
         if (pattern.test(questionText) || pattern.test(answerText)) {
-          onJumpToDeckAndCard(deckName, i);
+          onJumpToDeckAndCard(deckName, card);
           setSearchDialogOpen(false);
           return;
         }
@@ -268,7 +267,7 @@ const BottomControls = ({
           : card.answer.toLowerCase();
 
         if (q.includes(term) || a.includes(term)) {
-          onJumpToDeckAndCard(deckName, i);
+          onJumpToDeckAndCard(deckName, card);
           setSearchDialogOpen(false);
           return;
         }
@@ -468,11 +467,11 @@ const BottomControls = ({
             Matches:
           </Typography>
           <Box sx={{ maxHeight: 300, overflowY: "auto" }}>
-            {searchResults.map(({ deck, card, index }, i) => (
+            {searchResults.map(({ deck, card }, i) => (
               <Box
                 key={i}
                 onClick={() => {
-                  onJumpToDeckAndCard(deck, index);
+                  onJumpToDeckAndCard(deck, card);
                   setSearchDialogOpen(false);
                 }}
                 sx={{
