@@ -14,7 +14,10 @@ type FlashcardProps = {
   answer: string | string[];
   showPinyin: boolean;
   showTraditional: boolean;
-  onSaveToList?: (card: { question: QuestionType; answer: string | string[] }) => void;
+  onSaveToList?: (card: {
+    question: QuestionType;
+    answer: string | string[];
+  }) => void;
   flipped: boolean;
   setFlipped: React.Dispatch<React.SetStateAction<boolean>>;
   onDeleteCard?: () => void;

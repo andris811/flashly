@@ -235,7 +235,6 @@ const BottomControls = ({
           setSearchDialogOpen(false);
           return;
         }
-        // console.log("TERM:", term, "Q:", questionText, "A:", answerText);
       }
     }
 
@@ -460,6 +459,12 @@ const BottomControls = ({
             label="Search term"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSearch();
+              }
+            }}
             fullWidth
             margin="normal"
           />

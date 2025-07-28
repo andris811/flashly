@@ -53,32 +53,32 @@ function App() {
   };
 
   function getDeckData(name: string): FlashcardData[] {
-  const rawDeck = localStorage.getItem(`deck::${name}`);
-  const rawOrder = localStorage.getItem(`deckOrder::${name}`);
+    const rawDeck = localStorage.getItem(`deck::${name}`);
+    const rawOrder = localStorage.getItem(`deckOrder::${name}`);
 
-  // HSK decks – return directly
-  if (Object.prototype.hasOwnProperty.call(hskDecks, name)) {
-    return hskDecks[name as HSKLevel];
+    // HSK decks – return directly
+    if (Object.prototype.hasOwnProperty.call(hskDecks, name)) {
+      return hskDecks[name as HSKLevel];
+    }
+
+    if (!rawDeck) return [];
+
+    const fullDeck = JSON.parse(rawDeck) as FlashcardData[];
+
+    if (rawOrder) {
+      const shuffledDeck = JSON.parse(rawOrder) as FlashcardData[];
+
+      // Merge: add any new cards from fullDeck that aren't in shuffledDeck
+      const missingCards = fullDeck.filter(
+        (card) =>
+          !shuffledDeck.some((c) => JSON.stringify(c) === JSON.stringify(card))
+      );
+
+      return [...shuffledDeck, ...missingCards];
+    }
+
+    return fullDeck;
   }
-
-  if (!rawDeck) return [];
-
-  const fullDeck = JSON.parse(rawDeck) as FlashcardData[];
-
-  if (rawOrder) {
-    const shuffledDeck = JSON.parse(rawOrder) as FlashcardData[];
-
-    // Merge: add any new cards from fullDeck that aren't in shuffledDeck
-    const missingCards = fullDeck.filter(
-      (card) =>
-        !shuffledDeck.some((c) => JSON.stringify(c) === JSON.stringify(card))
-    );
-
-    return [...shuffledDeck, ...missingCards];
-  }
-
-  return fullDeck;
-}
 
   const currentCard = deck[index];
 
@@ -176,20 +176,20 @@ function App() {
   };
 
   const jumpToDeckAndCard = (deckName: string, targetCard: FlashcardData) => {
-  const newDeck = getDeckData(deckName);
-  const newIndex = newDeck.findIndex((card) =>
-    JSON.stringify(card) === JSON.stringify(targetCard)
-  );
+    const newDeck = getDeckData(deckName);
+    const newIndex = newDeck.findIndex(
+      (card) => JSON.stringify(card) === JSON.stringify(targetCard)
+    );
 
-  if (newIndex === -1) {
-    alert("Could not find card in selected deck.");
-    return;
-  }
+    if (newIndex === -1) {
+      alert("Could not find card in selected deck.");
+      return;
+    }
 
-  setCategory(deckName);
-  setDeck(newDeck);
-  goToCard(newIndex);
-};
+    setCategory(deckName);
+    setDeck(newDeck);
+    goToCard(newIndex);
+  };
 
   useEffect(() => {
     refreshUserDecks();
