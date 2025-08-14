@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import { getDecks, createDeck, addCard } from "../services/deckService"; // backend sync
 
 type AddCardModalProps = {
   open: boolean;
@@ -17,6 +18,8 @@ type AddCardModalProps = {
   onCardAdded: () => void;
   existingDecks: string[]; // include custom + built-in deck names
 };
+
+type Deck = { _id: string; name: string }; // minimal local type
 
 const AddCardModal = ({
   open,
@@ -28,6 +31,8 @@ const AddCardModal = ({
   const [customDeck, setCustomDeck] = useState("");
   const [front, setFront] = useState([""]);
   const [back, setBack] = useState([""]);
+  const [submitting, setSubmitting] = useState(false);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
 
   const addFrontField = () => setFront([...front, ""]);
   const addBackField = () => setBack([...back, ""]);
@@ -49,11 +54,23 @@ const AddCardModal = ({
     setCustomDeck("");
     setFront([""]);
     setBack([""]);
+    setErrMsg(null);
+    setSubmitting(false);
   };
 
   const getFinalDeckName = () => customDeck.trim() || deck;
 
-  const handleSubmit = () => {
+  // Find deck by name, or create it, and return its _id
+  const resolveDeckId = async (name: string): Promise<string> => {
+    const { data } = await getDecks(); // Axios style in your project
+    const found = (data as Deck[]).find((d) => d.name === name);
+    if (found?._id) return found._id;
+
+    const created = await createDeck(name);
+    return (created.data as Deck)._id;
+  };
+
+  const handleSubmit = async () => {
     const questionFields = front.filter((f) => f.trim() !== "");
     const answerFields = back.filter((b) => b.trim() !== "");
     if (questionFields.length === 0 || answerFields.length === 0) return;
@@ -64,17 +81,36 @@ const AddCardModal = ({
     };
 
     const targetDeck = getFinalDeckName();
-    const existing = localStorage.getItem(`deck::${targetDeck}`);
-    const parsed = existing ? JSON.parse(existing) : [];
-    parsed.push(newCard);
-    localStorage.setItem(`deck::${targetDeck}`, JSON.stringify(parsed));
-    onCardAdded();
-    reset();
-    onClose();
+    setSubmitting(true);
+    setErrMsg(null);
+
+    // Try backend sync first (non-blocking for local save)
+    try {
+      const deckId = await resolveDeckId(targetDeck);
+      await addCard(deckId, newCard);
+    } catch (err) {
+      console.error("AddCardModal backend save failed:", err);
+      setErrMsg("Saved locally. Couldn’t sync to server right now.");
+    } finally {
+      // Always keep your existing local behavior:
+      const existing = localStorage.getItem(`deck::${targetDeck}`);
+      const parsed = existing ? JSON.parse(existing) : [];
+      parsed.push(newCard);
+      localStorage.setItem(`deck::${targetDeck}`, JSON.stringify(parsed));
+
+      onCardAdded();
+      reset();
+      onClose();
+    }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={submitting ? undefined : onClose}
+      fullWidth
+      maxWidth="sm"
+    >
       <DialogTitle>Create New Flashcard</DialogTitle>
       <DialogContent>
         <Stack spacing={3} mt={1}>
@@ -89,6 +125,7 @@ const AddCardModal = ({
               value={deck}
               onChange={(e) => setDeck(e.target.value)}
               fullWidth
+              disabled={submitting}
             >
               {existingDecks.map((name) => (
                 <MenuItem key={name} value={name}>
@@ -103,6 +140,7 @@ const AddCardModal = ({
               fullWidth
               margin="dense"
               placeholder="e.g. Spanish, Math, Quotes..."
+              disabled={submitting}
             />
           </div>
 
@@ -119,10 +157,15 @@ const AddCardModal = ({
                 onChange={(e) => updateFront(i, e.target.value)}
                 fullWidth
                 margin="dense"
+                disabled={submitting}
               />
             ))}
             {front.length < 3 && (
-              <Button onClick={addFrontField} size="small">
+              <Button
+                onClick={addFrontField}
+                size="small"
+                disabled={submitting}
+              >
                 + Add Field
               </Button>
             )}
@@ -141,27 +184,37 @@ const AddCardModal = ({
                 onChange={(e) => updateBack(i, e.target.value)}
                 fullWidth
                 margin="dense"
+                disabled={submitting}
               />
             ))}
             {back.length < 3 && (
-              <Button onClick={addBackField} size="small">
+              <Button onClick={addBackField} size="small" disabled={submitting}>
                 + Add Field
               </Button>
             )}
           </div>
+
+          {errMsg && (
+            <Typography color="error" variant="body2">
+              {errMsg}
+            </Typography>
+          )}
         </Stack>
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} disabled={submitting}>
+          Cancel
+        </Button>
         <Button
           onClick={handleSubmit}
           disabled={
+            submitting ||
             front.every((f) => f.trim() === "") ||
             back.every((b) => b.trim() === "")
           }
         >
-          Save
+          {submitting ? "Saving…" : "Save"}
         </Button>
       </DialogActions>
     </Dialog>

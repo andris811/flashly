@@ -27,6 +27,8 @@ import type { HSKLevel } from "../data/hskDecks";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import SearchIcon from "@mui/icons-material/Search";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import { useNavigate } from "react-router-dom";
 
 type Flashcard = {
   question:
@@ -113,6 +115,7 @@ const BottomControls = ({
       };
 
   const year = new Date().getFullYear();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -389,6 +392,14 @@ const BottomControls = ({
           aria-label="Options"
         >
           <SettingsIcon />
+        </IconButton>
+
+        {/* Me page */}
+        <IconButton
+          onClick={() => navigate("/me")}
+          aria-label="Me / Profile"
+        >
+          <AccountCircleIcon />
         </IconButton>
         <Menu
           anchorEl={anchorOptions}
