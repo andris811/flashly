@@ -9,7 +9,11 @@ import {
   Alert,
   Stack,
   Link,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import HomeIcon from "@mui/icons-material/Home";
 import API from "../../services/api";
 import axios from "axios";
@@ -21,17 +25,24 @@ type LoginResponse = {
   message?: string;
 };
 
+const isValidEmail = (s: string) => /\S+@\S+\.\S+/.test(s);
+
 export default function LoginForm() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const emailError = email.length > 0 && !isValidEmail(email);
+  const canSubmit = isValidEmail(email) && password.length > 0 && !loading;
+
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     setError(null);
+    if (!canSubmit) return;
     setLoading(true);
 
     try {
@@ -49,9 +60,8 @@ export default function LoginForm() {
     } catch (err: unknown) {
       let msg = "Login failed";
       if (axios.isAxiosError(err)) {
-        const serverMsg = (
-          err.response?.data as { message?: string } | undefined
-        )?.message;
+        const serverMsg =
+          (err.response?.data as { message?: string } | undefined)?.message;
         msg = serverMsg ?? `HTTP ${err.response?.status ?? "Error"}`;
       } else if (err instanceof Error) {
         msg = err.message;
@@ -131,14 +141,29 @@ export default function LoginForm() {
                 required
                 fullWidth
                 autoFocus
+                error={emailError}
+                helperText={emailError ? "Enter a valid email address" : " "}
               />
               <TextField
                 label="Password"
-                type="password"
+                type={showPw ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.currentTarget.value)}
                 required
                 fullWidth
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPw((v) => !v)}
+                        edge="end"
+                        aria-label="toggle password visibility"
+                      >
+                        {showPw ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
 
               {error && <Alert severity="error">{error}</Alert>}
@@ -146,7 +171,7 @@ export default function LoginForm() {
               <Button
                 type="submit"
                 variant="contained"
-                disabled={loading}
+                disabled={!canSubmit}
                 fullWidth
                 size="large"
               >

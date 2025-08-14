@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Box,
@@ -9,7 +9,11 @@ import {
   Alert,
   Stack,
   Link,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import HomeIcon from "@mui/icons-material/Home";
 import API from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
@@ -17,17 +21,32 @@ import Footer from "../Footer";
 
 type RegisterResponse = { token: string };
 
+const isValidEmail = (s: string) => /\S+@\S+\.\S+/.test(s);
+const MIN_PW = 6;
+
 export default function RegisterForm() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const emailError = email.length > 0 && !isValidEmail(email);
+  const pwError = password.length > 0 && password.length < MIN_PW;
+  const canSubmit = isValidEmail(email) && password.length >= MIN_PW && !loading;
+
+  const pwHelper = useMemo(() => {
+    if (password.length === 0) return "At least 6 characters";
+    if (password.length < MIN_PW) return `Too short (${password.length}/6)`;
+    return "Looks good ✓";
+  }, [password]);
+
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     setError(null);
+    if (!canSubmit) return;
     setLoading(true);
     try {
       const { data } = await API.post<RegisterResponse>("/auth/register", {
@@ -113,14 +132,31 @@ export default function RegisterForm() {
                 required
                 fullWidth
                 autoFocus
+                error={emailError}
+                helperText={emailError ? "Enter a valid email address" : " "}
               />
               <TextField
                 label="Password"
-                type="password"
+                type={showPw ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.currentTarget.value)}
                 required
                 fullWidth
+                error={pwError}
+                helperText={pwHelper}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPw((v) => !v)}
+                        edge="end"
+                        aria-label="toggle password visibility"
+                      >
+                        {showPw ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
 
               {error && <Alert severity="error">{error}</Alert>}
@@ -128,7 +164,7 @@ export default function RegisterForm() {
               <Button
                 type="submit"
                 variant="contained"
-                disabled={loading}
+                disabled={!canSubmit}
                 fullWidth
                 size="large"
               >

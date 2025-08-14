@@ -5,9 +5,10 @@ import AddCardModal from "./components/AddCardModal";
 import SaveToListModal from "./components/SaveToListModal";
 import Footer from "./components/Footer";
 import type { FlashcardData } from "../src/types/Flashcard";
-
 import { hskDecks } from "./data/hskDecks";
 import type { HSKLevel } from "./data/hskDecks";
+import { useAuth } from "./context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 import {
   IconButton,
@@ -20,11 +21,15 @@ import {
   Dialog,
   DialogTitle,
   DialogActions,
+  DialogContent,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 
 function App() {
   const initialCategory = localStorage.getItem("lastCategory") || "hsk1";
@@ -175,6 +180,8 @@ function App() {
     }
   };
 
+  const navigate = useNavigate();
+
   const jumpToDeckAndCard = (deckName: string, targetCard: FlashcardData) => {
     const newDeck = getDeckData(deckName);
     const newIndex = newDeck.findIndex(
@@ -206,6 +213,40 @@ function App() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [index, deck.length]);
+
+  const { user } = useAuth();
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const [dontShowChecked, setDontShowChecked] = useState(false);
+
+  const DONT_SHOW_KEY = "signupPrompt::dontShow";
+  const LAST_SHOWN_KEY = "signupPrompt::lastShown";
+
+  // Store "YYYY-MM-DD" so "once/day" is clean and timezone-safe enough for client UI.
+  const todayStr = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
+  useEffect(() => {
+    // Only for logged-out users
+    if (user) return;
+
+    const dontShow = localStorage.getItem(DONT_SHOW_KEY) === "1";
+    if (dontShow) return;
+
+    const lastShown = localStorage.getItem(LAST_SHOWN_KEY);
+    const today = todayStr();
+
+    // Show if never shown, or last shown date is not today
+    if (lastShown !== today) {
+      setShowSignupPrompt(true);
+      // record immediately so we don't re-open multiple times in same day
+      localStorage.setItem(LAST_SHOWN_KEY, today);
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
@@ -315,7 +356,7 @@ function App() {
 
         <LinearProgress
           variant="determinate"
-          value={((index + 1) / deck.length) * 100}
+          value={deck.length ? ((index + 1) / deck.length) * 100 : 0}
           className="w-full max-w-xs sm:max-w-sm mb-4 rounded"
           sx={{ mt: 2 }}
         />
@@ -356,18 +397,135 @@ function App() {
       <Dialog
         open={showResetConfirm}
         onClose={() => setShowResetConfirm(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 3,
+              backgroundColor: "rgba(255,255,255)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+              maxWidth: 500,
+              mx: 2,
+            },
+          },
+          backdrop: {
+            sx: { backgroundColor: "rgba(17,24,39,0.3)" },
+          },
+        }}
       >
-        <DialogTitle>Reset deck progress and order?</DialogTitle>
-        <DialogActions>
-          <Button onClick={() => setShowResetConfirm(false)}>Cancel</Button>
+        <DialogTitle
+          sx={{ fontWeight: 800, color: "#0f172a", px: 3, pt: 3, pb: 1 }}
+        >
+          Reset deck progress and order?
+        </DialogTitle>
+
+        <DialogContent sx={{ px: 3, pt: 0.5 }}>
+          <Typography sx={{ color: "#334155" }}>
+            This will clear your saved progress for the current deck and remove
+            any custom shuffle order. You can’t undo this action.
+          </Typography>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={() => setShowResetConfirm(false)}
+            sx={{ color: "#334155" }}
+          >
+            Cancel
+          </Button>
           <Button
             color="error"
+            variant="contained"
             onClick={() => {
               reset();
               setShowResetConfirm(false);
             }}
+            sx={{
+              boxShadow: "0 6px 14px rgba(239,68,68,0.25)",
+            }}
           >
             Reset
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={showSignupPrompt}
+        onClose={() => setShowSignupPrompt(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 3,
+              backgroundColor: "rgba(255,255,255)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+              maxWidth: 500,
+              mx: 2,
+            },
+          },
+          backdrop: {
+            sx: { backgroundColor: "rgba(17,24,39,0.3)" },
+          },
+        }}
+      >
+        <Box
+          sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 3, pt: 3 }}
+        >
+          <PersonAddAlt1Icon sx={{ color: "#0f172a" }} />
+          <DialogTitle sx={{ p: 0, m: 0, fontWeight: 800, color: "#0f172a" }}>
+            Save your progress across devices
+          </DialogTitle>
+        </Box>
+
+        <DialogContent sx={{ px: 3, pt: 1.5 }}>
+          <Typography sx={{ color: "#334155" }}>
+            Create a free account so your decks and progress sync anywhere you
+            study.
+          </Typography>
+
+          <FormControlLabel
+            sx={{
+              mt: 2,
+              px: 1,
+              borderRadius: 1.5,
+              backgroundColor: "rgba(255,255,255,0.6)",
+            }}
+            control={
+              <Checkbox
+                checked={dontShowChecked}
+                onChange={(e) => setDontShowChecked(e.target.checked)}
+                size="small"
+              />
+            }
+            label="Don’t show again"
+          />
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={() => {
+              if (dontShowChecked) localStorage.setItem(DONT_SHOW_KEY, "1");
+              setShowSignupPrompt(false);
+            }}
+            sx={{ color: "#334155" }}
+          >
+            Maybe later
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              if (dontShowChecked) localStorage.setItem(DONT_SHOW_KEY, "1");
+              setShowSignupPrompt(false);
+              navigate("/register");
+            }}
+            sx={{
+              bgcolor: "#0ea5e9",
+              "&:hover": { bgcolor: "#0284c7" },
+              boxShadow: "0 6px 14px rgba(2,132,199,0.25)",
+            }}
+          >
+            Register
           </Button>
         </DialogActions>
       </Dialog>
