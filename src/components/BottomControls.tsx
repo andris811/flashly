@@ -29,6 +29,7 @@ import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import SearchIcon from "@mui/icons-material/Search";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { useNavigate } from "react-router-dom";
+import ConfirmDeleteDeckDialog from "./ConfirmDeleteDeckDialog";
 
 type Flashcard = {
   question:
@@ -395,10 +396,7 @@ const BottomControls = ({
         </IconButton>
 
         {/* Me page */}
-        <IconButton
-          onClick={() => navigate("/me")}
-          aria-label="Me / Profile"
-        >
+        <IconButton onClick={() => navigate("/me")} aria-label="Me / Profile">
           <AccountCircleIcon />
         </IconButton>
         <Menu
@@ -434,28 +432,17 @@ const BottomControls = ({
       </Box>
 
       {/* Confirm Delete Dialog */}
-      <Dialog
+      <ConfirmDeleteDeckDialog
         open={!!confirmDeleteDeck}
-        onClose={() => setConfirmDeleteDeck(null)}
-      >
-        <DialogTitle>
-          {`Delete deck "${confirmDeleteDeck}"? This cannot be undone.`}
-        </DialogTitle>
-        <DialogActions>
-          <Button onClick={() => setConfirmDeleteDeck(null)}>Cancel</Button>
-          <Button
-            color="error"
-            onClick={() => {
-              if (confirmDeleteDeck) {
-                onDeleteDeck(confirmDeleteDeck);
-                setConfirmDeleteDeck(null);
-              }
-            }}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        deckName={confirmDeleteDeck}
+        onCancel={() => setConfirmDeleteDeck(null)}
+        onConfirm={() => {
+          if (confirmDeleteDeck) {
+            onDeleteDeck(confirmDeleteDeck);
+            setConfirmDeleteDeck(null);
+          }
+        }}
+      />
 
       {/* Search Dialog */}
       <Dialog

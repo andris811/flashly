@@ -28,6 +28,7 @@ import {
   getCards,
 } from "../services/deckService";
 import Footer from "../components/Footer";
+import ConfirmDeleteDeckDialog from "../components/ConfirmDeleteDeckDialog";
 
 // Minimal local types
 type Deck = { _id: string; name: string; userId: string };
@@ -73,6 +74,8 @@ export default function MePage() {
     }
   };
 
+  const [deleteReq, setDeleteReq] = useState<{ id: string; name: string } | null>(null);
+
   useEffect(() => {
     loadDecks();
   }, []);
@@ -102,26 +105,28 @@ export default function MePage() {
     }
   };
 
-  const handleDeleteDeck = async (deckId: string) => {
-    if (!confirm("Delete this deck and all its cards? This cannot be undone."))
-      return;
+  // ✅ Unified delete handler (used by the dialog)
+  const handleDeleteDeck = async (deckId: string, deckName?: string) => {
     try {
-      const deck = decks.find((d) => d._id === deckId);
       await deleteDeck(deckId);
 
-      if (deck) {
-        localStorage.removeItem(LS_DECK(deck.name));
-        localStorage.removeItem(LS_DECK_ID(deck.name));
+      // mirror localStorage cleanup so Study page updates
+      if (deckName) {
+        localStorage.removeItem(LS_DECK(deckName));
+        localStorage.removeItem(LS_DECK_ID(deckName));
       }
 
       if (selectedDeck?._id === deckId) {
         setSelectedDeck(null);
         setCards([]);
       }
+
       await loadDecks();
     } catch (err) {
       console.error("Delete deck failed:", err);
       setErrMsg("Couldn’t delete deck.");
+    } finally {
+      setDeleteReq(null); // close dialog
     }
   };
 
@@ -249,7 +254,7 @@ export default function MePage() {
                           {/* Delete */}
                           <IconButton
                             aria-label="delete"
-                            onClick={() => handleDeleteDeck(d._id)}
+                            onClick={() => setDeleteReq({ id: d._id, name: d.name })}
                             color="error"
                           >
                             <DeleteIcon />
@@ -258,12 +263,8 @@ export default function MePage() {
                       }
                     >
                       {/* Click row to start studying this deck */}
-                      <ListItemButton
-                        onClick={() => goStudyDeck(d.name, d._id)}
-                      >
-                        <ListItemText
-                          primary={d.name} /* no id here per your preference */
-                        />
+                      <ListItemButton onClick={() => goStudyDeck(d.name, d._id)}>
+                        <ListItemText primary={d.name} />
                       </ListItemButton>
                     </ListItem>
                   ))}
@@ -337,6 +338,16 @@ export default function MePage() {
             )}
           </Paper>
         )}
+
+        {/* Shared, styled delete dialog */}
+        <ConfirmDeleteDeckDialog
+          open={!!deleteReq}
+          deckName={deleteReq?.name}
+          onCancel={() => setDeleteReq(null)}
+          onConfirm={() => {
+            if (deleteReq) handleDeleteDeck(deleteReq.id, deleteReq.name);
+          }}
+        />
       </Box>
 
       {/* Footer (same as study page) */}
