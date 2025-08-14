@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import API from "../../services/api";
 import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
 
 type LoginResponse = {
   token: string;
@@ -23,6 +24,7 @@ export default function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ export default function LoginForm() {
         throw new Error(data.message ?? `HTTP ${status}`);
       }
 
-      localStorage.setItem("flashly::token", data.token);
+      await login(data.token);
 
       navigate("/me");
     } catch (err: unknown) {

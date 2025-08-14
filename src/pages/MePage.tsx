@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Paper, Typography, Button, List, ListItem, ListItemText, Divider } from "@mui/material";
+import { Box, Paper, Typography, Button, List, ListItem, ListItemText } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
 import API from "../services/api";
 
