@@ -30,6 +30,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
+import { getCards } from "./services/deckService";
 
 function App() {
   const initialCategory = localStorage.getItem("lastCategory") || "hsk1";
@@ -117,18 +118,71 @@ function App() {
     setIndexWithSave(0);
   };
 
-  const changeCategory = (newCategory: string) => {
-    const newDeck = getDeckData(newCategory);
-    const savedIndex = parseInt(
-      localStorage.getItem(`progress::${newCategory}`) || "0",
-      10
-    );
-    const safeIndex = Math.min(savedIndex, newDeck.length - 1);
+  const LS_DECK = (name: string) => `deck::${name}`;
+  const LS_DECK_ID = (name: string) => `serverDeckId::${name}`;
 
-    localStorage.setItem("lastCategory", newCategory);
-    setCategory(newCategory);
-    setDeck(newDeck);
-    setIndex(safeIndex);
+  type ServerCardLike = {
+    question: unknown; // we don't assume server shape here
+    answer: string | string[]; // matches what FlashcardData expects
+  };
+
+  // Map backend Card-ish → FlashcardData (typing only; runtime unchanged)
+  function normalizeCards(data: ServerCardLike[]): FlashcardData[] {
+    return data.map((c) => ({
+      // assert to the UI shape you already render
+      question: c.question as FlashcardData["question"],
+      answer: c.answer,
+    }));
+  }
+
+  async function loadDeckFromAnySource(name: string): Promise<FlashcardData[]> {
+    // HSK decks live locally
+    if (Object.prototype.hasOwnProperty.call(hskDecks, name)) {
+      return hskDecks[name as HSKLevel];
+    }
+
+    // Try localStorage first
+    const raw = localStorage.getItem(LS_DECK(name));
+    if (raw) {
+      try {
+        return JSON.parse(raw) as FlashcardData[];
+      } catch {
+        // fall through to server fetch
+      }
+    }
+
+    // Try server by remembered deck id
+    const deckId = localStorage.getItem(LS_DECK_ID(name));
+    if (deckId) {
+      try {
+        const { data } = await getCards(deckId);
+        const mapped = normalizeCards(data);
+        localStorage.setItem(LS_DECK(name), JSON.stringify(mapped));
+        return mapped;
+      } catch (e) {
+        console.error("Failed to fetch server deck:", e);
+      }
+    }
+
+    // Nothing found
+    return [];
+  }
+
+  const changeCategory = (newCategory: string) => {
+    (async () => {
+      const newDeck = await loadDeckFromAnySource(newCategory);
+
+      const savedIndex = parseInt(
+        localStorage.getItem(`progress::${newCategory}`) || "0",
+        10
+      );
+      const safeIdx = Math.min(savedIndex, Math.max(newDeck.length - 1, 0));
+
+      localStorage.setItem("lastCategory", newCategory);
+      setCategory(newCategory);
+      setDeck(newDeck);
+      setIndex(safeIdx);
+    })();
   };
 
   const refreshUserDecks = () => {
@@ -200,6 +254,29 @@ function App() {
 
   useEffect(() => {
     refreshUserDecks();
+  }, []);
+
+  // If initial category is a server deck and not in localStorage yet, fetch once.
+  useEffect(() => {
+    (async () => {
+      const isHSK = Object.prototype.hasOwnProperty.call(hskDecks, category);
+      const hasLocal = !!localStorage.getItem(LS_DECK(category));
+      const serverId = localStorage.getItem(LS_DECK_ID(category));
+
+      if (!isHSK && !hasLocal && serverId) {
+        try {
+          const { data } = await getCards(serverId);
+          const mapped = normalizeCards(data);
+          localStorage.setItem(LS_DECK(category), JSON.stringify(mapped));
+          setDeck(mapped);
+          setIndex(0);
+        } catch (e) {
+          console.error("Initial server deck fetch failed:", e);
+        }
+      }
+    })();
+    // run only once for the initial category
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleKeyDown = (e: KeyboardEvent) => {

@@ -21,7 +21,12 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getDecks, createDeck, deleteDeck, getCards } from "../services/deckService";
+import {
+  getDecks,
+  createDeck,
+  deleteDeck,
+  getCards,
+} from "../services/deckService";
 import Footer from "../components/Footer";
 
 // Minimal local types
@@ -50,6 +55,10 @@ export default function MePage() {
   const [loadingCards, setLoadingCards] = useState(false);
   const [cardsErr, setCardsErr] = useState<string | null>(null);
 
+  // Bridge keys used by the Study page
+  const LS_DECK = (name: string) => `deck::${name}`;
+  const LS_DECK_ID = (name: string) => `serverDeckId::${name}`;
+
   const loadDecks = async () => {
     setErrMsg(null);
     setLoadingDecks(true);
@@ -75,6 +84,18 @@ export default function MePage() {
       await createDeck(name);
       setNewDeckName("");
       await loadDecks();
+
+      // find the created deck so we can mirror its id
+      const created = (await getDecks()).data.find(
+        (d: Deck) => d.name === name
+      ) as Deck | undefined;
+      if (created) {
+        // create an empty local deck so Study sees it immediately
+        if (!localStorage.getItem(LS_DECK(name))) {
+          localStorage.setItem(LS_DECK(name), JSON.stringify([]));
+        }
+        localStorage.setItem(LS_DECK_ID(name), created._id);
+      }
     } catch (err) {
       console.error("Create deck failed:", err);
       setErrMsg("Couldn’t create deck right now.");
@@ -82,9 +103,17 @@ export default function MePage() {
   };
 
   const handleDeleteDeck = async (deckId: string) => {
-    if (!confirm("Delete this deck and all its cards? This cannot be undone.")) return;
+    if (!confirm("Delete this deck and all its cards? This cannot be undone."))
+      return;
     try {
+      const deck = decks.find((d) => d._id === deckId);
       await deleteDeck(deckId);
+
+      if (deck) {
+        localStorage.removeItem(LS_DECK(deck.name));
+        localStorage.removeItem(LS_DECK_ID(deck.name));
+      }
+
       if (selectedDeck?._id === deckId) {
         setSelectedDeck(null);
         setCards([]);
@@ -112,9 +141,10 @@ export default function MePage() {
     }
   };
 
-  const goStudyDeck = (deckName: string) => {
-    localStorage.setItem("lastCategory", deckName); // ensure App selects it
-    navigate("/");                                   // go to study page
+  const goStudyDeck = (deckName: string, deckId?: string) => {
+    localStorage.setItem("lastCategory", deckName);
+    if (deckId) localStorage.setItem(LS_DECK_ID(deckName), deckId);
+    navigate("/");
   };
 
   const closeDeck = () => {
@@ -141,7 +171,11 @@ export default function MePage() {
           elevation={3}
         >
           <Stack direction="row" spacing={1} alignItems="center">
-            <Button startIcon={<HomeIcon />} variant="text" onClick={() => navigate("/")}>
+            <Button
+              startIcon={<HomeIcon />}
+              variant="text"
+              onClick={() => navigate("/")}
+            >
               Back to Study
             </Button>
           </Stack>
@@ -206,7 +240,10 @@ export default function MePage() {
                       secondaryAction={
                         <Stack direction="row" spacing={1}>
                           {/* Show details (with deck id there) */}
-                          <IconButton aria-label="view" onClick={() => openDeck(d)}>
+                          <IconButton
+                            aria-label="view"
+                            onClick={() => openDeck(d)}
+                          >
                             <VisibilityIcon />
                           </IconButton>
                           {/* Delete */}
@@ -221,11 +258,11 @@ export default function MePage() {
                       }
                     >
                       {/* Click row to start studying this deck */}
-                      <ListItemButton onClick={() => goStudyDeck(d.name)}>
+                      <ListItemButton
+                        onClick={() => goStudyDeck(d.name, d._id)}
+                      >
                         <ListItemText
-                          primary={d.name}
-                          // ⬇️ hide id in the list; it appears in details view only
-                          // secondary={`id: ${d._id}`}
+                          primary={d.name} /* no id here per your preference */
                         />
                       </ListItemButton>
                     </ListItem>
@@ -255,14 +292,18 @@ export default function MePage() {
               <Button
                 sx={{ ml: "auto" }}
                 variant="contained"
-                onClick={() => goStudyDeck(selectedDeck.name)}
+                onClick={() => goStudyDeck(selectedDeck.name, selectedDeck._id)}
               >
                 Study this deck
               </Button>
             </Stack>
 
             {/* Deck id only in details */}
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: "block" }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mb: 2, display: "block" }}
+            >
               Deck ID: {selectedDeck._id}
             </Typography>
 
@@ -280,7 +321,9 @@ export default function MePage() {
                   <ListItem key={c._id} divider>
                     <ListItemText
                       primary={
-                        Array.isArray(c.answer) ? c.answer.join(" | ") : String(c.answer)
+                        Array.isArray(c.answer)
+                          ? c.answer.join(" | ")
+                          : String(c.answer)
                       }
                       secondary={
                         typeof c.question === "string"
