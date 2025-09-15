@@ -20,17 +20,9 @@ html, body, #root {
   height: 100%;
 }
 
-:root {
-  /* iOS safe area custom props to use in padding if needed */
+:root{
   --safe-top: env(safe-area-inset-top);
-  --safe-right: env(safe-area-inset-right);
   --safe-bottom: env(safe-area-inset-bottom);
   --safe-left: env(safe-area-inset-left);
-}
-
-.app-safe {
-  padding-top: var(--safe-top);
-  padding-right: var(--safe-right);
-  padding-bottom: var(--safe-bottom);
-  padding-left: var(--safe-left);
+  --safe-right: env(safe-area-inset-right);
 }
