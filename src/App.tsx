@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Flashcard from "./components/Flashcard";
 import BottomControls from "./components/BottomControls";
 import AddCardModal from "./components/AddCardModal";
@@ -9,6 +9,9 @@ import { hskDecks } from "./data/hskDecks";
 import type { HSKLevel } from "./data/hskDecks";
 import { useAuth } from "./context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
+import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 import {
   IconButton,
@@ -57,6 +60,17 @@ function App() {
     setIndex(newIndex);
     localStorage.setItem(`progress::${category}`, String(newIndex));
   };
+
+  const [slideshowOn, setSlideshowOn] = useState(false);
+  const [slideshowDialogOpen, setSlideshowDialogOpen] = useState(false);
+  const [intervalMs, setIntervalMs] = useState<number>(
+    Number(localStorage.getItem("slideshow::intervalMs") || 60000)
+  );
+  // keep a stable timer id that isn't tied to re-renders
+  const timerRef = useRef<number | null>(null);
+  const frontTimerRef = useRef<number | null>(null); // waits on front
+  const backTimerRef = useRef<number | null>(null); // shows back briefly
+  const BACK_VIEW_MS = 3000; // how long to show the back (tweak as you like)
 
   function getDeckData(name: string): FlashcardData[] {
     const rawDeck = localStorage.getItem(`deck::${name}`);
@@ -120,6 +134,45 @@ function App() {
 
   const LS_DECK = (name: string) => `deck::${name}`;
   const LS_DECK_ID = (name: string) => `serverDeckId::${name}`;
+
+  const startSlideshow = () => {
+    if (slideshowOn || deck.length === 0) return;
+    setFlipped(false);
+    setSlideshowOn(true);
+  };
+
+  const stopSlideshow = () => {
+    setSlideshowOn(false);
+  };
+
+  const clearTimers = () => {
+    if (frontTimerRef.current) {
+      window.clearTimeout(frontTimerRef.current);
+      frontTimerRef.current = null;
+    }
+    if (backTimerRef.current) {
+      window.clearTimeout(backTimerRef.current);
+      backTimerRef.current = null;
+    }
+  };
+
+  const scheduleNext = () => {
+    clearTimers();
+
+    // Wait on the front for the main interval
+    frontTimerRef.current = window.setTimeout(() => {
+      // Flip to back
+      setFlipped(true);
+
+      // After brief back-view, advance to next front
+      backTimerRef.current = window.setTimeout(() => {
+        if (deck.length === 0) return;
+        const nextIndex = index < deck.length - 1 ? index + 1 : 0;
+        // goToCard will unflip and then change index after 300ms — perfect
+        goToCard(nextIndex);
+      }, BACK_VIEW_MS);
+    }, intervalMs);
+  };
 
   type ServerCardLike = {
     question: unknown; // we don't assume server shape here
@@ -325,6 +378,45 @@ function App() {
     }
   }, [user]);
 
+  // manage slideshow timers
+  useEffect(() => {
+    if (slideshowOn && deck.length > 0) {
+      scheduleNext();
+    }
+    return clearTimers;
+  }, [slideshowOn, index, deck.length, intervalMs]);
+
+  // pause when tab hidden; resume when visible
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        clearTimers();
+      } else if (slideshowOn) {
+        scheduleNext();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [slideshowOn, intervalMs, deck.length, index]);
+
+  // pause when tab is hidden; resume when visible
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        if (timerRef.current) {
+          window.clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
+      } else if (slideshowOn) {
+        scheduleNext();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [slideshowOn, intervalMs]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
       <Typography
@@ -403,8 +495,13 @@ function App() {
             justifyContent: "center",
             // flexGrow: { xs: 0, sm: 1 },
             flexGrow: 1,
-            minHeight: { xs: "300px", sm: "350px", md: "420px" },
-            maxHeight: { xs: "400px", sm: "500px", md: "600px" },
+            // enlarge in slideshow
+            minHeight: slideshowOn
+              ? { xs: "420px", sm: "520px", md: "620px" }
+              : { xs: "300px", sm: "350px", md: "420px" },
+            maxHeight: slideshowOn
+              ? { xs: "600px", sm: "700px", md: "800px" }
+              : { xs: "400px", sm: "500px", md: "600px" },
           }}
         >
           {deck.length > 0 ? (
@@ -450,24 +547,72 @@ function App() {
           </IconButton>
         </div>
 
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{ mt: 1 }}
+        >
           <Button
             variant="outlined"
             size="small"
             startIcon={<RestartAltIcon />}
             onClick={() => setShowResetConfirm(true)}
             fullWidth
+            disabled={slideshowOn}
           >
             Reset
           </Button>
+
           <Button
             variant="outlined"
             size="small"
             startIcon={<ShuffleIcon />}
             onClick={shuffleDeck}
             fullWidth
+            disabled={slideshowOn}
           >
             Shuffle
+          </Button>
+
+          {/* Slideshow play/pause */}
+          {!slideshowOn ? (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<PlayCircleOutlineIcon />}
+              onClick={startSlideshow}
+              fullWidth
+              sx={{
+                bgcolor: "#0ea5e9",
+                "&:hover": { bgcolor: "#0284c7" },
+                boxShadow: "0 6px 14px rgba(2,132,199,0.25)",
+              }}
+            >
+              Slideshow
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              size="small"
+              color="warning"
+              startIcon={<PauseCircleOutlineIcon />}
+              onClick={stopSlideshow}
+              fullWidth
+              sx={{ boxShadow: "0 6px 14px rgba(251,191,36,0.25)" }}
+            >
+              Pause
+            </Button>
+          )}
+
+          {/* Timer settings */}
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<AccessTimeIcon />}
+            onClick={() => setSlideshowDialogOpen(true)}
+            fullWidth
+          >
+            {Math.round(intervalMs / 1000)}s
           </Button>
         </Stack>
       </Box>
@@ -603,6 +748,92 @@ function App() {
             }}
           >
             Register
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={slideshowDialogOpen}
+        onClose={() => setSlideshowDialogOpen(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 3,
+              backgroundColor: "rgba(255,255,255)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+              maxWidth: 460,
+              mx: 2,
+            },
+          },
+          backdrop: {
+            sx: { backgroundColor: "rgba(17,24,39,0.3)" },
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{ fontWeight: 800, color: "#0f172a", px: 3, pt: 3, pb: 1 }}
+        >
+          Slideshow timing
+        </DialogTitle>
+
+        <DialogContent sx={{ px: 3, pt: 0.5 }}>
+          <Stack spacing={1.5}>
+            <Button
+              variant={intervalMs === 15000 ? "contained" : "outlined"}
+              onClick={() => setIntervalMs(15000)}
+            >
+              Every 15 seconds
+            </Button>
+            <Button
+              variant={intervalMs === 30000 ? "contained" : "outlined"}
+              onClick={() => setIntervalMs(30000)}
+            >
+              Every 30 seconds
+            </Button>
+            <Button
+              variant={intervalMs === 60000 ? "contained" : "outlined"}
+              onClick={() => setIntervalMs(60000)}
+            >
+              Every 1 minute
+            </Button>
+            <Button
+              variant={intervalMs === 120000 ? "contained" : "outlined"}
+              onClick={() => setIntervalMs(120000)}
+            >
+              Every 2 minutes
+            </Button>
+          </Stack>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={() => setSlideshowDialogOpen(false)}
+            sx={{ color: "#334155" }}
+          >
+            Close
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              localStorage.setItem("slideshow::intervalMs", String(intervalMs));
+              setSlideshowDialogOpen(false);
+              if (slideshowOn) {
+                // reschedule immediately with new interval
+                if (timerRef.current) {
+                  window.clearTimeout(timerRef.current);
+                  timerRef.current = null;
+                }
+                scheduleNext();
+              }
+            }}
+            sx={{
+              bgcolor: "#0ea5e9",
+              "&:hover": { bgcolor: "#0284c7" },
+              boxShadow: "0 6px 14px rgba(2,132,199,0.25)",
+            }}
+          >
+            Save
           </Button>
         </DialogActions>
       </Dialog>
