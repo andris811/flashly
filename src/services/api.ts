@@ -1,23 +1,27 @@
+// services/api.ts
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from "axios";
+import { Capacitor } from "@capacitor/core";
+import { getToken } from "./tokenStore";
 
-export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
+// Prefer Vercel env var; otherwise choose based on environment
+const isNative = Capacitor.isNativePlatform();
+const isLocalWeb = !isNative && location.hostname === "localhost";
 
-const API: AxiosInstance = axios.create({
-  baseURL: API_BASE,
-});
+export const API_BASE =
+  import.meta.env.VITE_API_BASE
+    ?? (isLocalWeb ? "http://localhost:4000/api" : "https://flashly-api.onrender.com");
 
-// Attach token from localStorage (typed)
-API.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem("flashly::token");
+const API: AxiosInstance = axios.create({ baseURL: API_BASE });
+
+API.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  const token = await getToken();
   if (token) {
-    // Ensure headers object exists
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Helper to set/unset token on login/logout without casting to any
 export function setAuthToken(token: string | null): void {
   if (token) {
     API.defaults.headers = API.defaults.headers ?? {};

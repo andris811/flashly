@@ -409,7 +409,7 @@ function App() {
   }, [slideshowOpen, slideshowOn, intervalMs, deck.length, index]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center app-safe">
       <Typography
         variant="h3"
         sx={{

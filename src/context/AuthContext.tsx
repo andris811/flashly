@@ -1,8 +1,9 @@
+// context/AuthContext.tsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import API, { setAuthToken } from "../services/api";
+import { getToken, saveToken, clearToken } from "../services/tokenStore";
 
 type MeResponse = { id: string; email: string };
-
 type User = { id: string; email: string };
 
 type AuthContextValue = {
@@ -10,7 +11,7 @@ type AuthContextValue = {
   token: string | null;
   loading: boolean;
   login: (jwt: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -20,39 +21,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Initial load: read token from Capacitor Preferences, validate with /auth/me
   useEffect(() => {
-    const stored = localStorage.getItem("flashly::token");
-    if (!stored) {
-      setLoading(false);
-      return;
-    }
-    setToken(stored);
-    setAuthToken(stored);
-
-    API.get<MeResponse>("/auth/me")
-      .then(({ data }) => setUser({ id: data.id, email: data.email }))
-      .catch(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const stored = await getToken();
+        if (!stored) return;
+        setToken(stored);
+        setAuthToken(stored); // sets default Authorization on API
+        const { data } = await API.get<MeResponse>("/auth/me");
+        if (!alive) return;
+        setUser({ id: data.id, email: data.email });
+      } catch {
+        // token invalid → clear everything
+        await clearToken();
         setAuthToken(null);
-        localStorage.removeItem("flashly::token");
-        setToken(null);
-        setUser(null);
-      })
-      .finally(() => setLoading(false));
+        if (alive) {
+          setToken(null);
+          setUser(null);
+        }
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const login = async (jwt: string) => {
-    setToken(jwt);
-    localStorage.setItem("flashly::token", jwt);
+    // persist → set default header → fetch user
+    await saveToken(jwt);
     setAuthToken(jwt);
+    setToken(jwt);
     const { data } = await API.get<MeResponse>("/auth/me");
     setUser({ id: data.id, email: data.email });
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await clearToken();
+    setAuthToken(null);
     setUser(null);
     setToken(null);
-    localStorage.removeItem("flashly::token");
-    setAuthToken(null);
   };
 
   const value = useMemo<AuthContextValue>(
