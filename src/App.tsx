@@ -9,9 +9,11 @@ import { hskDecks } from "./data/hskDecks";
 import type { HSKLevel } from "./data/hskDecks";
 import { useAuth } from "./context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { ButtonGroup } from "@mui/material";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import CloseIcon from "@mui/icons-material/Close";
 
 import {
   IconButton,
@@ -62,15 +64,27 @@ function App() {
   };
 
   const [slideshowOn, setSlideshowOn] = useState(false);
+  const [slideshowOpen, setSlideshowOpen] = useState(false); //full screen
   const [slideshowDialogOpen, setSlideshowDialogOpen] = useState(false);
   const [intervalMs, setIntervalMs] = useState<number>(
     Number(localStorage.getItem("slideshow::intervalMs") || 60000)
   );
   // keep a stable timer id that isn't tied to re-renders
-  const timerRef = useRef<number | null>(null);
+  // const timerRef = useRef<number | null>(null);
   const frontTimerRef = useRef<number | null>(null); // waits on front
   const backTimerRef = useRef<number | null>(null); // shows back briefly
   const BACK_VIEW_MS = 3000; // how long to show the back (tweak as you like)
+
+  const clearTimers = () => {
+    if (frontTimerRef.current) {
+      window.clearTimeout(frontTimerRef.current);
+      frontTimerRef.current = null;
+    }
+    if (backTimerRef.current) {
+      window.clearTimeout(backTimerRef.current);
+      backTimerRef.current = null;
+    }
+  };
 
   function getDeckData(name: string): FlashcardData[] {
     const rawDeck = localStorage.getItem(`deck::${name}`);
@@ -139,21 +153,13 @@ function App() {
     if (slideshowOn || deck.length === 0) return;
     setFlipped(false);
     setSlideshowOn(true);
+    setSlideshowOpen(true);
   };
 
   const stopSlideshow = () => {
     setSlideshowOn(false);
-  };
-
-  const clearTimers = () => {
-    if (frontTimerRef.current) {
-      window.clearTimeout(frontTimerRef.current);
-      frontTimerRef.current = null;
-    }
-    if (backTimerRef.current) {
-      window.clearTimeout(backTimerRef.current);
-      backTimerRef.current = null;
-    }
+    setSlideshowOpen(false);
+    clearTimers();
   };
 
   const scheduleNext = () => {
@@ -380,42 +386,27 @@ function App() {
 
   // manage slideshow timers
   useEffect(() => {
-    if (slideshowOn && deck.length > 0) {
+    if (slideshowOpen && slideshowOn && deck.length > 0) {
       scheduleNext();
+    } else {
+      clearTimers();
     }
     return clearTimers;
-  }, [slideshowOn, index, deck.length, intervalMs]);
+  }, [slideshowOpen, slideshowOn, index, deck.length, intervalMs]);
 
   // pause when tab hidden; resume when visible
   useEffect(() => {
     const onVisibilityChange = () => {
       if (document.hidden) {
         clearTimers();
-      } else if (slideshowOn) {
+      } else if (slideshowOpen && slideshowOn) {
         scheduleNext();
       }
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () =>
       document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [slideshowOn, intervalMs, deck.length, index]);
-
-  // pause when tab is hidden; resume when visible
-  useEffect(() => {
-    const onVisibilityChange = () => {
-      if (document.hidden) {
-        if (timerRef.current) {
-          window.clearTimeout(timerRef.current);
-          timerRef.current = null;
-        }
-      } else if (slideshowOn) {
-        scheduleNext();
-      }
-    };
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [slideshowOn, intervalMs]);
+  }, [slideshowOpen, slideshowOn, intervalMs, deck.length, index]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
@@ -493,15 +484,9 @@ function App() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            // flexGrow: { xs: 0, sm: 1 },
             flexGrow: 1,
-            // enlarge in slideshow
-            minHeight: slideshowOn
-              ? { xs: "420px", sm: "520px", md: "620px" }
-              : { xs: "300px", sm: "350px", md: "420px" },
-            maxHeight: slideshowOn
-              ? { xs: "600px", sm: "700px", md: "800px" }
-              : { xs: "400px", sm: "500px", md: "600px" },
+            minHeight: { xs: "300px", sm: "350px", md: "420px" },
+            maxHeight: { xs: "400px", sm: "500px", md: "600px" },
           }}
         >
           {deck.length > 0 ? (
@@ -558,7 +543,7 @@ function App() {
             startIcon={<RestartAltIcon />}
             onClick={() => setShowResetConfirm(true)}
             fullWidth
-            disabled={slideshowOn}
+            disabled={slideshowOpen}
           >
             Reset
           </Button>
@@ -569,51 +554,45 @@ function App() {
             startIcon={<ShuffleIcon />}
             onClick={shuffleDeck}
             fullWidth
-            disabled={slideshowOn}
+            disabled={slideshowOpen}
           >
             Shuffle
           </Button>
 
-          {/* Slideshow play/pause */}
-          {!slideshowOn ? (
+          {/* Connected slideshow control */}
+          <ButtonGroup
+            fullWidth
+            variant="contained"
+            aria-label="slideshow controls"
+          >
             <Button
-              variant="contained"
-              size="small"
-              startIcon={<PlayCircleOutlineIcon />}
-              onClick={startSlideshow}
-              fullWidth
+              onClick={() =>
+                slideshowOpen ? stopSlideshow() : startSlideshow()
+              }
+              startIcon={
+                slideshowOpen ? (
+                  <PauseCircleOutlineIcon />
+                ) : (
+                  <PlayCircleOutlineIcon />
+                )
+              }
               sx={{
-                bgcolor: "#0ea5e9",
-                "&:hover": { bgcolor: "#0284c7" },
-                boxShadow: "0 6px 14px rgba(2,132,199,0.25)",
+                bgcolor: slideshowOpen ? "#f59e0b" : "#0ea5e9",
+                "&:hover": { bgcolor: slideshowOpen ? "#d97706" : "#0284c7" },
+                whiteSpace: "nowrap",
               }}
             >
-              Slideshow
+              {slideshowOpen ? "Pause" : "Slide"}
             </Button>
-          ) : (
             <Button
-              variant="contained"
-              size="small"
-              color="warning"
-              startIcon={<PauseCircleOutlineIcon />}
-              onClick={stopSlideshow}
-              fullWidth
-              sx={{ boxShadow: "0 6px 14px rgba(251,191,36,0.25)" }}
+              color="primary"
+              onClick={() => setSlideshowDialogOpen(true)}
+              startIcon={<AccessTimeIcon />}
+              sx={{ minWidth: 0, px: 1.5, whiteSpace: "nowrap" }}
             >
-              Pause
+              {Math.round(intervalMs / 1000)}s
             </Button>
-          )}
-
-          {/* Timer settings */}
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<AccessTimeIcon />}
-            onClick={() => setSlideshowDialogOpen(true)}
-            fullWidth
-          >
-            {Math.round(intervalMs / 1000)}s
-          </Button>
+          </ButtonGroup>
         </Stack>
       </Box>
       <Dialog
@@ -818,12 +797,10 @@ function App() {
             onClick={() => {
               localStorage.setItem("slideshow::intervalMs", String(intervalMs));
               setSlideshowDialogOpen(false);
-              if (slideshowOn) {
-                // reschedule immediately with new interval
-                if (timerRef.current) {
-                  window.clearTimeout(timerRef.current);
-                  timerRef.current = null;
-                }
+
+              // if slideshow is running, reschedule with the new interval
+              if (slideshowOpen && slideshowOn) {
+                clearTimers();
                 scheduleNext();
               }
             }}
@@ -836,6 +813,64 @@ function App() {
             Save
           </Button>
         </DialogActions>
+      </Dialog>
+      <Dialog
+        fullScreen
+        open={slideshowOpen}
+        onClose={stopSlideshow} // backdrop click or Esc stops slideshow
+        PaperProps={{
+          sx: {
+            background: "linear-gradient(135deg, #fef3c7 0%, #fce7f3 100%)", // match app bg
+          },
+        }}
+      >
+        {/* Optional small top bar */}
+        <Box sx={{ p: 1.5, display: "flex", justifyContent: "flex-end" }}>
+          <Button
+            onClick={stopSlideshow}
+            startIcon={<CloseIcon />}
+            sx={{
+              bgcolor: "rgba(255,255,255,0.7)",
+              border: "1px solid #e2e8f0",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
+            }}
+          >
+            Exit
+          </Button>
+        </Box>
+
+        {/* Centered large flashcard */}
+        <Box
+          sx={{
+            height: "100%",
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            p: { xs: 2, sm: 4 },
+          }}
+          onClick={(e) => {
+            // Don't close if you click on the card; only backdrop or Exit closes
+            e.stopPropagation();
+          }}
+        >
+          <Box sx={{ width: "min(92vw, 920px)" }}>
+            {deck.length > 0 && (
+              <Flashcard
+                question={currentCard?.question}
+                answer={currentCard?.answer}
+                showPinyin={showPinyin}
+                showTraditional={showTraditional}
+                // disable save/delete while presenting
+                onSaveToList={undefined}
+                onDeleteCard={undefined}
+                flipped={flipped}
+                setFlipped={setFlipped}
+                isDeletable={false}
+              />
+            )}
+          </Box>
+        </Box>
       </Dialog>
       <BottomControls
         category={category}
