@@ -1,38 +1,38 @@
-// capacitor.config.ts
-import { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli';
 
-const USE_REMOTE = process.env.FLASHLY_USE_REMOTE === 'true';
+// Toggle with env; default to remote for dev
+const USE_REMOTE = process.env.FLASHLY_USE_REMOTE === 'true' || true; // <- true while you're developing
 
 const config: CapacitorConfig = {
   appId: 'com.avdev.flashly',
   appName: 'Flashly',
-  webDir: 'dist', // used when bundled
+  webDir: 'dist', // used in bundled mode
   server: USE_REMOTE
     ? {
-        // Remote mode (loads from Vercel)
-        url: 'https://flashly-iota.vercel.app/',
+        // Remote mode (instant updates)
+        url: 'https://flashly-iota.vercel.app/', // try '/index.html' if provisional load ever flakes
         cleartext: false,
         allowNavigation: [
-          'flashly.vercel.app',
+          'flashly-iota.vercel.app',
           '*.vercel.app',
-          'flashly-api.onrender.com',
+          'flashly-backend.onrender.com',
           '*.onrender.com',
         ],
       }
     : {
-        // Bundled mode (offline; for review/production)
+        // Bundled mode (offline; for App Review/production)
         iosScheme: 'capacitor',
         hostname: 'localhost',
         androidScheme: 'https',
         allowNavigation: [
-          'flashly-api.onrender.com',
+          'flashly-backend.onrender.com',
           '*.onrender.com',
         ],
       },
   plugins: {
     SplashScreen: {
       launchAutoHide: false,
-      backgroundColor: '#0B0B0B',
+      backgroundColor: '#FDF8EA',
       showSpinner: false,
     },
   },

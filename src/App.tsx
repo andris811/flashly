@@ -38,6 +38,7 @@ import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import { getCards } from "./services/deckService";
 
 function App() {
+  console.log('[boot] C: <App/> entered');
   const initialCategory = localStorage.getItem("lastCategory") || "hsk1";
   const initialDeck = getDeckData(initialCategory);
   const savedIndex = parseInt(
