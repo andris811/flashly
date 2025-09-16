@@ -14,6 +14,7 @@ import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CloseIcon from "@mui/icons-material/Close";
+// import useStatusBar from "./useStatusbar";
 
 import {
   IconButton,
@@ -38,7 +39,7 @@ import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import { getCards } from "./services/deckService";
 
 function App() {
-  console.log('[boot] C: <App/> entered');
+  console.log("[boot] C: <App/> entered");
   const initialCategory = localStorage.getItem("lastCategory") || "hsk1";
   const initialDeck = getDeckData(initialCategory);
   const savedIndex = parseInt(
@@ -86,6 +87,8 @@ function App() {
       backTimerRef.current = null;
     }
   };
+
+  // useStatusBar();
 
   function getDeckData(name: string): FlashcardData[] {
     const rawDeck = localStorage.getItem(`deck::${name}`);
@@ -410,504 +413,520 @@ function App() {
   }, [slideshowOpen, slideshowOn, intervalMs, deck.length, index]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center pt-[calc(var(--safe-top)+12px)] px-[var(--safe-left)] pr-[var(--safe-right)]">
-      <Typography
-        variant="h3"
-        sx={{
-          fontWeight: 800,
-          mt: 4,
-          mb: 2,
-          textAlign: "center",
-          color: "#1e293b",
-          textShadow: "0 2px 3px rgba(0,0,0,0.15)",
-          letterSpacing: "0.05em",
-        }}
-      >
-        Flashly
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        sx={{
-          mb: 4,
-          color: "#64748b",
-          fontWeight: 400,
-          fontSize: { xs: "0.9rem", sm: "1.1rem" },
-          textAlign: "center",
-        }}
-      >
-        Study smarter, not harder — one card at a time!
-      </Typography>
-
-      <Box
-        sx={{
-          width: "100%",
-          pb: { xs: 12, sm: 0 },
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        <Box mb={4}>
-          <Paper
-            elevation={3}
-            sx={{
-              px: 2.5,
-              py: 1.5,
-              borderRadius: 2,
-              backgroundColor: "rgba(255, 255, 255, 0.7)",
-              backdropFilter: "blur(6px)",
-              border: "1px solid #e2e8f0",
-              display: "inline-block",
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{ color: "#334155", fontWeight: 400 }}
-            >
-              Studying{" "}
-              <Typography
-                component="span"
-                sx={{ fontWeight: 600, color: "#0f172a" }}
-              >
-                {category.toUpperCase()}
-              </Typography>{" "}
-              · Card {index + 1} / {deck.length}
-            </Typography>
-          </Paper>
-        </Box>
+    <>
+      <div
+        aria-hidden
+        className="fixed inset-0 -z-10 pointer-events-none bg-gradient-to-br from-yellow-100 to-pink-100"
+      />
+      <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center app-safe">
+        <Typography
+          variant="h3"
+          sx={{
+            fontWeight: 800,
+            mt: 6,
+            mb: 2,
+            textAlign: "center",
+            color: "#1e293b",
+            textShadow: "0 2px 3px rgba(0,0,0,0.15)",
+            letterSpacing: "0.05em",
+          }}
+        >
+          Flashly
+        </Typography>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            mb: 4,
+            color: "#64748b",
+            fontWeight: 400,
+            fontSize: { xs: "0.9rem", sm: "1.1rem" },
+            textAlign: "center",
+          }}
+        >
+          Study smarter, not harder — one card at a time!
+        </Typography>
 
         <Box
           sx={{
             width: "100%",
-            mb: { xs: 2, sm: 2 },
-            mt: { xs: 0, sm: 0 },
-            px: { xs: 0, sm: 2 },
+            pb: { xs: 12, sm: 0 },
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
-            flexGrow: 1,
-            minHeight: { xs: "300px", sm: "350px", md: "420px" },
-            maxHeight: { xs: "400px", sm: "500px", md: "600px" },
           }}
         >
-          {deck.length > 0 ? (
-            <Flashcard
-              question={currentCard?.question}
-              answer={currentCard?.answer}
-              showPinyin={showPinyin}
-              showTraditional={showTraditional}
-              onSaveToList={handleSaveToList}
-              flipped={flipped}
-              setFlipped={setFlipped}
-              onDeleteCard={deleteCurrentCard}
-              isDeletable={isCustomDeck}
-            />
-          ) : (
-            <Typography
-              variant="h6"
-              color="text.secondary"
-              align="center"
-              sx={{ mt: 6 }}
-            >
-              No cards left in this deck.
-            </Typography>
-          )}
-        </Box>
-
-        <LinearProgress
-          variant="determinate"
-          value={deck.length ? ((index + 1) / deck.length) * 100 : 0}
-          className="w-full max-w-xs sm:max-w-sm mb-4 rounded"
-          sx={{ mt: 2 }}
-        />
-
-        <div className="flex items-center justify-center gap-6 sm:gap-8 mb-4 text-gray-700">
-          <IconButton onClick={goPrev} disabled={index === 0}>
-            <ArrowBackIcon />
-          </IconButton>
-          <span className="text-sm font-medium">
-            {index + 1} / {deck.length}
-          </span>
-          <IconButton onClick={goNext} disabled={index === deck.length - 1}>
-            <ArrowForwardIcon />
-          </IconButton>
-        </div>
-
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          sx={{ mt: 1 }}
-        >
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<RestartAltIcon />}
-            onClick={() => setShowResetConfirm(true)}
-            fullWidth
-            disabled={slideshowOpen}
-          >
-            Reset
-          </Button>
-
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<ShuffleIcon />}
-            onClick={shuffleDeck}
-            fullWidth
-            disabled={slideshowOpen}
-          >
-            Shuffle
-          </Button>
-
-          {/* Connected slideshow control */}
-          <ButtonGroup
-            fullWidth
-            variant="contained"
-            aria-label="slideshow controls"
-          >
-            <Button
-              onClick={() =>
-                slideshowOpen ? stopSlideshow() : startSlideshow()
-              }
-              startIcon={
-                slideshowOpen ? (
-                  <PauseCircleOutlineIcon />
-                ) : (
-                  <PlayCircleOutlineIcon />
-                )
-              }
+          <Box mb={4}>
+            <Paper
+              elevation={3}
               sx={{
-                bgcolor: slideshowOpen ? "#f59e0b" : "#0ea5e9",
-                "&:hover": { bgcolor: slideshowOpen ? "#d97706" : "#0284c7" },
-                whiteSpace: "nowrap",
+                px: 2.5,
+                py: 1.5,
+                borderRadius: 2,
+                backgroundColor: "rgba(255, 255, 255, 0.7)",
+                backdropFilter: "blur(6px)",
+                border: "1px solid #e2e8f0",
+                display: "inline-block",
               }}
             >
-              {slideshowOpen ? "Pause" : "Slide"}
-            </Button>
-            <Button
-              color="primary"
-              onClick={() => setSlideshowDialogOpen(true)}
-              startIcon={<AccessTimeIcon />}
-              sx={{ minWidth: 0, px: 1.5, whiteSpace: "nowrap" }}
-            >
-              {Math.round(intervalMs / 1000)}s
-            </Button>
-          </ButtonGroup>
-        </Stack>
-      </Box>
-      <Dialog
-        open={showResetConfirm}
-        onClose={() => setShowResetConfirm(false)}
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 3,
-              backgroundColor: "rgba(255,255,255)",
-              backdropFilter: "blur(8px)",
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
-              maxWidth: 500,
-              mx: 2,
-            },
-          },
-          backdrop: {
-            sx: { backgroundColor: "rgba(17,24,39,0.3)" },
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{ fontWeight: 800, color: "#0f172a", px: 3, pt: 3, pb: 1 }}
-        >
-          Reset deck progress and order?
-        </DialogTitle>
+              <Typography
+                variant="body2"
+                sx={{ color: "#334155", fontWeight: 400 }}
+              >
+                Studying{" "}
+                <Typography
+                  component="span"
+                  sx={{ fontWeight: 600, color: "#0f172a" }}
+                >
+                  {category.toUpperCase()}
+                </Typography>{" "}
+                · Card {index + 1} / {deck.length}
+              </Typography>
+            </Paper>
+          </Box>
 
-        <DialogContent sx={{ px: 3, pt: 0.5 }}>
-          <Typography sx={{ color: "#334155" }}>
-            This will clear your saved progress for the current deck and remove
-            any custom shuffle order. You can’t undo this action.
-          </Typography>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button
-            onClick={() => setShowResetConfirm(false)}
-            sx={{ color: "#334155" }}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="error"
-            variant="contained"
-            onClick={() => {
-              reset();
-              setShowResetConfirm(false);
-            }}
+          <Box
             sx={{
-              boxShadow: "0 6px 14px rgba(239,68,68,0.25)",
+              width: "100%",
+              mb: { xs: 2, sm: 2 },
+              mt: { xs: 0, sm: 0 },
+              px: { xs: 0, sm: 2 },
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexGrow: 1,
+              minHeight: { xs: "300px", sm: "350px", md: "420px" },
+              maxHeight: { xs: "400px", sm: "500px", md: "600px" },
             }}
           >
-            Reset
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog
-        open={showSignupPrompt}
-        onClose={() => setShowSignupPrompt(false)}
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 3,
-              backgroundColor: "rgba(255,255,255)",
-              backdropFilter: "blur(8px)",
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
-              maxWidth: 500,
-              mx: 2,
-            },
-          },
-          backdrop: {
-            sx: { backgroundColor: "rgba(17,24,39,0.3)" },
-          },
-        }}
-      >
-        <Box
-          sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 3, pt: 3 }}
-        >
-          <PersonAddAlt1Icon sx={{ color: "#0f172a" }} />
-          <DialogTitle sx={{ p: 0, m: 0, fontWeight: 800, color: "#0f172a" }}>
-            Save your progress across devices
-          </DialogTitle>
-        </Box>
-
-        <DialogContent sx={{ px: 3, pt: 1.5 }}>
-          <Typography sx={{ color: "#334155" }}>
-            Create a free account so your decks and progress sync anywhere you
-            study.
-          </Typography>
-
-          <FormControlLabel
-            sx={{
-              mt: 2,
-              px: 1,
-              borderRadius: 1.5,
-              backgroundColor: "rgba(255,255,255,0.6)",
-            }}
-            control={
-              <Checkbox
-                checked={dontShowChecked}
-                onChange={(e) => setDontShowChecked(e.target.checked)}
-                size="small"
-              />
-            }
-            label="Don’t show again"
-          />
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button
-            onClick={() => {
-              if (dontShowChecked) localStorage.setItem(DONT_SHOW_KEY, "1");
-              setShowSignupPrompt(false);
-            }}
-            sx={{ color: "#334155" }}
-          >
-            Maybe later
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              if (dontShowChecked) localStorage.setItem(DONT_SHOW_KEY, "1");
-              setShowSignupPrompt(false);
-              navigate("/register");
-            }}
-            sx={{
-              bgcolor: "#0ea5e9",
-              "&:hover": { bgcolor: "#0284c7" },
-              boxShadow: "0 6px 14px rgba(2,132,199,0.25)",
-            }}
-          >
-            Register
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog
-        open={slideshowDialogOpen}
-        onClose={() => setSlideshowDialogOpen(false)}
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 3,
-              backgroundColor: "rgba(255,255,255)",
-              backdropFilter: "blur(8px)",
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
-              maxWidth: 460,
-              mx: 2,
-            },
-          },
-          backdrop: {
-            sx: { backgroundColor: "rgba(17,24,39,0.3)" },
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{ fontWeight: 800, color: "#0f172a", px: 3, pt: 3, pb: 1 }}
-        >
-          Slideshow timing
-        </DialogTitle>
-
-        <DialogContent sx={{ px: 3, pt: 0.5 }}>
-          <Stack spacing={1.5}>
-            <Button
-              variant={intervalMs === 15000 ? "contained" : "outlined"}
-              onClick={() => setIntervalMs(15000)}
-            >
-              Every 15 seconds
-            </Button>
-            <Button
-              variant={intervalMs === 30000 ? "contained" : "outlined"}
-              onClick={() => setIntervalMs(30000)}
-            >
-              Every 30 seconds
-            </Button>
-            <Button
-              variant={intervalMs === 60000 ? "contained" : "outlined"}
-              onClick={() => setIntervalMs(60000)}
-            >
-              Every 1 minute
-            </Button>
-            <Button
-              variant={intervalMs === 120000 ? "contained" : "outlined"}
-              onClick={() => setIntervalMs(120000)}
-            >
-              Every 2 minutes
-            </Button>
-          </Stack>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button
-            onClick={() => setSlideshowDialogOpen(false)}
-            sx={{ color: "#334155" }}
-          >
-            Close
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              localStorage.setItem("slideshow::intervalMs", String(intervalMs));
-              setSlideshowDialogOpen(false);
-
-              // if slideshow is running, reschedule with the new interval
-              if (slideshowOpen && slideshowOn) {
-                clearTimers();
-                scheduleNext();
-              }
-            }}
-            sx={{
-              bgcolor: "#0ea5e9",
-              "&:hover": { bgcolor: "#0284c7" },
-              boxShadow: "0 6px 14px rgba(2,132,199,0.25)",
-            }}
-          >
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog
-        fullScreen
-        open={slideshowOpen}
-        onClose={stopSlideshow} // backdrop click or Esc stops slideshow
-        PaperProps={{
-          sx: {
-            background: "linear-gradient(135deg, #fef3c7 0%, #fce7f3 100%)", // match app bg
-          },
-        }}
-      >
-        {/* Optional small top bar */}
-        <Box sx={{ p: 1.5, display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            onClick={stopSlideshow}
-            startIcon={<CloseIcon />}
-            sx={{
-              bgcolor: "rgba(255,255,255,0.7)",
-              border: "1px solid #e2e8f0",
-              "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
-            }}
-          >
-            Exit
-          </Button>
-        </Box>
-
-        {/* Centered large flashcard */}
-        <Box
-          sx={{
-            height: "100%",
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            p: { xs: 2, sm: 4 },
-          }}
-          onClick={(e) => {
-            // Don't close if you click on the card; only backdrop or Exit closes
-            e.stopPropagation();
-          }}
-        >
-          <Box sx={{ width: "min(92vw, 920px)" }}>
-            {deck.length > 0 && (
+            {deck.length > 0 ? (
               <Flashcard
                 question={currentCard?.question}
                 answer={currentCard?.answer}
                 showPinyin={showPinyin}
                 showTraditional={showTraditional}
-                // disable save/delete while presenting
-                onSaveToList={undefined}
-                onDeleteCard={undefined}
+                onSaveToList={handleSaveToList}
                 flipped={flipped}
                 setFlipped={setFlipped}
-                isDeletable={false}
+                onDeleteCard={deleteCurrentCard}
+                isDeletable={isCustomDeck}
               />
+            ) : (
+              <Typography
+                variant="h6"
+                color="text.secondary"
+                align="center"
+                sx={{ mt: 6 }}
+              >
+                No cards left in this deck.
+              </Typography>
             )}
           </Box>
+
+          <LinearProgress
+            variant="determinate"
+            value={deck.length ? ((index + 1) / deck.length) * 100 : 0}
+            className="w-full max-w-xs sm:max-w-sm mb-4 rounded"
+            sx={{ mt: 2 }}
+          />
+
+          <div className="flex items-center justify-center gap-6 sm:gap-8 mb-4 text-gray-700">
+            <IconButton onClick={goPrev} disabled={index === 0}>
+              <ArrowBackIcon />
+            </IconButton>
+            <span className="text-sm font-medium">
+              {index + 1} / {deck.length}
+            </span>
+            <IconButton onClick={goNext} disabled={index === deck.length - 1}>
+              <ArrowForwardIcon />
+            </IconButton>
+          </div>
+
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{ mt: 1 }}
+          >
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RestartAltIcon />}
+              onClick={() => setShowResetConfirm(true)}
+              fullWidth
+              disabled={slideshowOpen}
+            >
+              Reset
+            </Button>
+
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ShuffleIcon />}
+              onClick={shuffleDeck}
+              fullWidth
+              disabled={slideshowOpen}
+            >
+              Shuffle
+            </Button>
+
+            {/* Connected slideshow control */}
+            <ButtonGroup
+              fullWidth
+              variant="contained"
+              aria-label="slideshow controls"
+            >
+              <Button
+                onClick={() =>
+                  slideshowOpen ? stopSlideshow() : startSlideshow()
+                }
+                startIcon={
+                  slideshowOpen ? (
+                    <PauseCircleOutlineIcon />
+                  ) : (
+                    <PlayCircleOutlineIcon />
+                  )
+                }
+                sx={{
+                  bgcolor: slideshowOpen ? "#f59e0b" : "#0ea5e9",
+                  "&:hover": { bgcolor: slideshowOpen ? "#d97706" : "#0284c7" },
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {slideshowOpen ? "Pause" : "Slide"}
+              </Button>
+              <Button
+                color="primary"
+                onClick={() => setSlideshowDialogOpen(true)}
+                startIcon={<AccessTimeIcon />}
+                sx={{ minWidth: 0, px: 1.5, whiteSpace: "nowrap" }}
+              >
+                {Math.round(intervalMs / 1000)}s
+              </Button>
+            </ButtonGroup>
+          </Stack>
         </Box>
-      </Dialog>
-      <BottomControls
-        category={category}
-        onChangeCategory={changeCategory}
-        hskCategories={Object.keys(hskDecks) as HSKLevel[]}
-        userCategories={userDecks}
-        showPinyin={showPinyin}
-        showTraditional={showTraditional}
-        togglePinyin={() => setShowPinyin((prev) => !prev)}
-        toggleTraditional={() => setShowTraditional((prev) => !prev)}
-        onAddCard={() => setIsModalOpen(true)}
-        onDeleteDeck={handleDeleteDeck}
-        onJumpToDeckAndCard={jumpToDeckAndCard}
-        hskDeckData={hskDecks}
-      />
-      <AddCardModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onCardAdded={() => {
-          refreshUserDecks();
-          const updated = getDeckData(category);
-          setDeck(updated);
-        }}
-        existingDecks={userDecks}
-      />
-      <SaveToListModal
-        open={saveModalOpen}
-        onClose={() => setSaveModalOpen(false)}
-        existingDecks={userDecks}
-        card={cardToSave}
-        onSave={handleSaveToDeck}
-      />
-      <div className="hidden sm:block w-full mt-auto">
-        <Footer />
+        <Dialog
+          open={showResetConfirm}
+          onClose={() => setShowResetConfirm(false)}
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: 3,
+                backgroundColor: "rgba(255,255,255)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid #e2e8f0",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+                maxWidth: 500,
+                mx: 2,
+              },
+            },
+            backdrop: {
+              sx: { backgroundColor: "rgba(17,24,39,0.3)" },
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{ fontWeight: 800, color: "#0f172a", px: 3, pt: 3, pb: 1 }}
+          >
+            Reset deck progress and order?
+          </DialogTitle>
+
+          <DialogContent sx={{ px: 3, pt: 0.5 }}>
+            <Typography sx={{ color: "#334155" }}>
+              This will clear your saved progress for the current deck and
+              remove any custom shuffle order. You can’t undo this action.
+            </Typography>
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+            <Button
+              onClick={() => setShowResetConfirm(false)}
+              sx={{ color: "#334155" }}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="error"
+              variant="contained"
+              onClick={() => {
+                reset();
+                setShowResetConfirm(false);
+              }}
+              sx={{
+                boxShadow: "0 6px 14px rgba(239,68,68,0.25)",
+              }}
+            >
+              Reset
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          open={showSignupPrompt}
+          onClose={() => setShowSignupPrompt(false)}
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: 3,
+                backgroundColor: "rgba(255,255,255)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid #e2e8f0",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+                maxWidth: 500,
+                mx: 2,
+              },
+            },
+            backdrop: {
+              sx: { backgroundColor: "rgba(17,24,39,0.3)" },
+            },
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              px: 3,
+              pt: 3,
+            }}
+          >
+            <PersonAddAlt1Icon sx={{ color: "#0f172a" }} />
+            <DialogTitle sx={{ p: 0, m: 0, fontWeight: 800, color: "#0f172a" }}>
+              Save your progress across devices
+            </DialogTitle>
+          </Box>
+
+          <DialogContent sx={{ px: 3, pt: 1.5 }}>
+            <Typography sx={{ color: "#334155" }}>
+              Create a free account so your decks and progress sync anywhere you
+              study.
+            </Typography>
+
+            <FormControlLabel
+              sx={{
+                mt: 2,
+                px: 1,
+                borderRadius: 1.5,
+                backgroundColor: "rgba(255,255,255,0.6)",
+              }}
+              control={
+                <Checkbox
+                  checked={dontShowChecked}
+                  onChange={(e) => setDontShowChecked(e.target.checked)}
+                  size="small"
+                />
+              }
+              label="Don’t show again"
+            />
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+            <Button
+              onClick={() => {
+                if (dontShowChecked) localStorage.setItem(DONT_SHOW_KEY, "1");
+                setShowSignupPrompt(false);
+              }}
+              sx={{ color: "#334155" }}
+            >
+              Maybe later
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                if (dontShowChecked) localStorage.setItem(DONT_SHOW_KEY, "1");
+                setShowSignupPrompt(false);
+                navigate("/register");
+              }}
+              sx={{
+                bgcolor: "#0ea5e9",
+                "&:hover": { bgcolor: "#0284c7" },
+                boxShadow: "0 6px 14px rgba(2,132,199,0.25)",
+              }}
+            >
+              Register
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          open={slideshowDialogOpen}
+          onClose={() => setSlideshowDialogOpen(false)}
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: 3,
+                backgroundColor: "rgba(255,255,255)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid #e2e8f0",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+                maxWidth: 460,
+                mx: 2,
+              },
+            },
+            backdrop: {
+              sx: { backgroundColor: "rgba(17,24,39,0.3)" },
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{ fontWeight: 800, color: "#0f172a", px: 3, pt: 3, pb: 1 }}
+          >
+            Slideshow timing
+          </DialogTitle>
+
+          <DialogContent sx={{ px: 3, pt: 0.5 }}>
+            <Stack spacing={1.5}>
+              <Button
+                variant={intervalMs === 15000 ? "contained" : "outlined"}
+                onClick={() => setIntervalMs(15000)}
+              >
+                Every 15 seconds
+              </Button>
+              <Button
+                variant={intervalMs === 30000 ? "contained" : "outlined"}
+                onClick={() => setIntervalMs(30000)}
+              >
+                Every 30 seconds
+              </Button>
+              <Button
+                variant={intervalMs === 60000 ? "contained" : "outlined"}
+                onClick={() => setIntervalMs(60000)}
+              >
+                Every 1 minute
+              </Button>
+              <Button
+                variant={intervalMs === 120000 ? "contained" : "outlined"}
+                onClick={() => setIntervalMs(120000)}
+              >
+                Every 2 minutes
+              </Button>
+            </Stack>
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+            <Button
+              onClick={() => setSlideshowDialogOpen(false)}
+              sx={{ color: "#334155" }}
+            >
+              Close
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                localStorage.setItem(
+                  "slideshow::intervalMs",
+                  String(intervalMs)
+                );
+                setSlideshowDialogOpen(false);
+
+                // if slideshow is running, reschedule with the new interval
+                if (slideshowOpen && slideshowOn) {
+                  clearTimers();
+                  scheduleNext();
+                }
+              }}
+              sx={{
+                bgcolor: "#0ea5e9",
+                "&:hover": { bgcolor: "#0284c7" },
+                boxShadow: "0 6px 14px rgba(2,132,199,0.25)",
+              }}
+            >
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          fullScreen
+          open={slideshowOpen}
+          onClose={stopSlideshow} // backdrop click or Esc stops slideshow
+          PaperProps={{
+            sx: {
+              background: "linear-gradient(135deg, #fef3c7 0%, #fce7f3 100%)", // match app bg
+            },
+          }}
+        >
+          {/* Optional small top bar */}
+          <Box sx={{ p: 1.5, display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              onClick={stopSlideshow}
+              startIcon={<CloseIcon />}
+              sx={{
+                bgcolor: "rgba(255,255,255,0.7)",
+                border: "1px solid #e2e8f0",
+                mt: 4,
+                "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
+              }}
+            >
+              Exit
+            </Button>
+          </Box>
+
+          {/* Centered large flashcard */}
+          <Box
+            sx={{
+              height: "100%",
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              p: { xs: 2, sm: 4 },
+            }}
+            onClick={(e) => {
+              // Don't close if you click on the card; only backdrop or Exit closes
+              e.stopPropagation();
+            }}
+          >
+            <Box sx={{ width: "min(92vw, 920px)" }}>
+              {deck.length > 0 && (
+                <Flashcard
+                  question={currentCard?.question}
+                  answer={currentCard?.answer}
+                  showPinyin={showPinyin}
+                  showTraditional={showTraditional}
+                  // disable save/delete while presenting
+                  onSaveToList={undefined}
+                  onDeleteCard={undefined}
+                  flipped={flipped}
+                  setFlipped={setFlipped}
+                  isDeletable={false}
+                />
+              )}
+            </Box>
+          </Box>
+        </Dialog>
+        <BottomControls
+          category={category}
+          onChangeCategory={changeCategory}
+          hskCategories={Object.keys(hskDecks) as HSKLevel[]}
+          userCategories={userDecks}
+          showPinyin={showPinyin}
+          showTraditional={showTraditional}
+          togglePinyin={() => setShowPinyin((prev) => !prev)}
+          toggleTraditional={() => setShowTraditional((prev) => !prev)}
+          onAddCard={() => setIsModalOpen(true)}
+          onDeleteDeck={handleDeleteDeck}
+          onJumpToDeckAndCard={jumpToDeckAndCard}
+          hskDeckData={hskDecks}
+        />
+        <AddCardModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onCardAdded={() => {
+            refreshUserDecks();
+            const updated = getDeckData(category);
+            setDeck(updated);
+          }}
+          existingDecks={userDecks}
+        />
+        <SaveToListModal
+          open={saveModalOpen}
+          onClose={() => setSaveModalOpen(false)}
+          existingDecks={userDecks}
+          card={cardToSave}
+          onSave={handleSaveToDeck}
+        />
+        <div className="hidden sm:block w-full mt-auto">
+          <Footer />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
