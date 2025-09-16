@@ -189,7 +189,7 @@ export default function LoginForm() {
         </Paper>
       </Box>
 
-      <div className="hidden sm:block w-full mt-auto">
+      <div className="w-full mt-auto">
         <Footer />
       </div>
     </div>

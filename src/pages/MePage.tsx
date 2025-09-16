@@ -159,11 +159,10 @@ export default function MePage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col">
-      <Box mx="auto" maxWidth={900} width="100%">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col safe-top safe-bottom">
+      <Box mx="auto" maxWidth={900} width="100%" sx={{ pb: { xs: "calc(96px + var(--safe-bottom))", sm: 0 } }}>
         {/* Top bar: back to study + logout */}
         <Paper
-        className="safe-top"
           sx={{
             p: 2,
             mb: 2,
@@ -352,7 +351,7 @@ export default function MePage() {
       </Box>
 
       {/* Footer (same as study page) */}
-      <div className="hidden sm:block w-full mt-auto">
+      <div className="w-full mt-auto">
         <Footer />
       </div>
     </div>

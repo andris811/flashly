@@ -418,7 +418,7 @@ function App() {
         aria-hidden
         className="fixed inset-0 -z-10 pointer-events-none bg-gradient-to-br from-yellow-100 to-pink-100"
       />
-      <div className="min-h-[100dvh] bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center safe-top safe-bottom">
         <Typography
           variant="h3"
           sx={{
