@@ -159,14 +159,14 @@ export default function MePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col">
       <Box mx="auto" maxWidth={900} width="100%">
         {/* Top bar: back to study + logout */}
         <Paper
+        className="safe-top"
           sx={{
             p: 2,
             mb: 2,
-            mt: 6,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",

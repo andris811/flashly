@@ -88,20 +88,31 @@ const BottomControls = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 
+  const MOBILE_BAR_HEIGHT = 64
+
   const layoutStyles: SxProps<Theme> = isMobile
     ? {
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        backgroundColor: "rgba(255,255,255,0.95)",
-        borderTop: "1px solid #ccc",
-        padding: "0.5rem 1rem",
-      }
+      position: "fixed",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1000,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+
+      // visual
+      backgroundColor: "rgba(255,255,255,0.95)",
+      backdropFilter: "blur(6px)",
+      borderTop: "1px solid #e5e7eb",
+
+      // sizing + safe area
+      minHeight: MOBILE_BAR_HEIGHT,
+      paddingLeft: "0.75rem",
+      paddingRight: "0.75rem",
+      paddingTop: "0.375rem",
+      paddingBottom: `calc(0.375rem + var(--safe-bottom))`,
+    }
     : {
         marginTop: "2rem",
         padding: "0.5rem 2rem",

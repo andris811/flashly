@@ -418,13 +418,13 @@ function App() {
         aria-hidden
         className="fixed inset-0 -z-10 pointer-events-none bg-gradient-to-br from-yellow-100 to-pink-100"
       />
-      <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center app-safe">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center">
         <Typography
           variant="h3"
           sx={{
             fontWeight: 800,
-            mt: 6,
-            mb: 2,
+            mt: { xs: 2, sm: 4 },
+            mb: { xs: 0.5, sm: 2 },
             textAlign: "center",
             color: "#1e293b",
             textShadow: "0 2px 3px rgba(0,0,0,0.15)",
@@ -436,7 +436,7 @@ function App() {
         <Typography
           variant="subtitle1"
           sx={{
-            mb: 4,
+            mb: { xs: 2, sm: 4 },
             color: "#64748b",
             fontWeight: 400,
             fontSize: { xs: "0.9rem", sm: "1.1rem" },
@@ -449,18 +449,19 @@ function App() {
         <Box
           sx={{
             width: "100%",
-            pb: { xs: 12, sm: 0 },
+            // Reserve space so content can scroll behind the fixed BottomControls
+            pb: { xs: "calc(96px + var(--safe-bottom))", sm: 0 }, // 96 ~= 72 bar + extra breathing room
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
           }}
         >
-          <Box mb={4}>
+          <Box mb={{ xs: 2, sm: 4 }}>
             <Paper
               elevation={3}
               sx={{
-                px: 2.5,
-                py: 1.5,
+                px: { xs: 2, sm: 2.5 },
+                py: { xs: 0.75, sm: 1.5 },
                 borderRadius: 2,
                 backgroundColor: "rgba(255, 255, 255, 0.7)",
                 backdropFilter: "blur(6px)",
@@ -487,15 +488,15 @@ function App() {
           <Box
             sx={{
               width: "100%",
-              mb: { xs: 2, sm: 2 },
+              mb: { xs: 1.5, sm: 2.5 },
               mt: { xs: 0, sm: 0 },
               px: { xs: 0, sm: 2 },
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexGrow: 1,
-              minHeight: { xs: "300px", sm: "350px", md: "420px" },
-              maxHeight: { xs: "400px", sm: "500px", md: "600px" },
+              minHeight: { xs: "260px", sm: "350px", md: "420px" },
+              maxHeight: { xs: "360px", sm: "500px", md: "600px" },
             }}
           >
             {deck.length > 0 ? (
@@ -526,10 +527,10 @@ function App() {
             variant="determinate"
             value={deck.length ? ((index + 1) / deck.length) * 100 : 0}
             className="w-full max-w-xs sm:max-w-sm mb-4 rounded"
-            sx={{ mt: 2 }}
+            sx={{ mt: { xs: 1, sm: 2 }, mb: { xs: 1.5, sm: 4 } }}
           />
 
-          <div className="flex items-center justify-center gap-6 sm:gap-8 mb-4 text-gray-700">
+          <div className="flex items-center justify-center gap-6 sm:gap-8 mb-3 text-gray-700">
             <IconButton onClick={goPrev} disabled={index === 0}>
               <ArrowBackIcon />
             </IconButton>
@@ -543,8 +544,8 @@ function App() {
 
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{ mt: 1 }}
+            spacing={{ xs: 1, sm: 2 }}
+            sx={{ mt: { xs: 0.5, sm: 1 } }}
           >
             <Button
               variant="outlined"
@@ -553,6 +554,7 @@ function App() {
               onClick={() => setShowResetConfirm(true)}
               fullWidth
               disabled={slideshowOpen}
+              sx={{ py: 0.75 }}
             >
               Reset
             </Button>
@@ -564,6 +566,7 @@ function App() {
               onClick={shuffleDeck}
               fullWidth
               disabled={slideshowOpen}
+              sx={{ py: 0.75 }}
             >
               Shuffle
             </Button>
@@ -573,6 +576,7 @@ function App() {
               fullWidth
               variant="contained"
               aria-label="slideshow controls"
+              size="small"
             >
               <Button
                 onClick={() =>
@@ -586,6 +590,7 @@ function App() {
                   )
                 }
                 sx={{
+                  py: 0.75,
                   bgcolor: slideshowOpen ? "#f59e0b" : "#0ea5e9",
                   "&:hover": { bgcolor: slideshowOpen ? "#d97706" : "#0284c7" },
                   whiteSpace: "nowrap",
@@ -597,7 +602,7 @@ function App() {
                 color="primary"
                 onClick={() => setSlideshowDialogOpen(true)}
                 startIcon={<AccessTimeIcon />}
-                sx={{ minWidth: 0, px: 1.5, whiteSpace: "nowrap" }}
+                sx={{ minWidth: 0, px: 1.25, py: 0.75, whiteSpace: "nowrap" }}
               >
                 {Math.round(intervalMs / 1000)}s
               </Button>
@@ -866,14 +871,24 @@ function App() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              p: { xs: 2, sm: 4 },
+              p: { xs: 1.5, md: 3 },
             }}
             onClick={(e) => {
               // Don't close if you click on the card; only backdrop or Exit closes
               e.stopPropagation();
             }}
           >
-            <Box sx={{ width: "min(92vw, 920px)" }}>
+            <Box
+              sx={{
+                width: {
+                  xs: "92vw",
+                  md: "min(96vw, 1200px)",
+                  lg: "min(96vw, 1400px)",
+                },
+                // give it some vertical presence as well:
+                minHeight: { md: "60vh", lg: "68vh" },
+              }}
+            >
               {deck.length > 0 && (
                 <Flashcard
                   question={currentCard?.question}
@@ -886,6 +901,7 @@ function App() {
                   flipped={flipped}
                   setFlipped={setFlipped}
                   isDeletable={false}
+                  size="large"
                 />
               )}
             </Box>
